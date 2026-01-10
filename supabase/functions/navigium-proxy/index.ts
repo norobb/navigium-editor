@@ -50,7 +50,28 @@ serve(async (req) => {
       headers: requestHeaders,
     })
 
-    const data = await response.json()
+    const responseText = await response.text()
+    console.log(`Raw response from n8n: ${responseText}`)
+
+    // Handle empty response
+    if (!responseText || responseText.trim() === '') {
+      return new Response(
+        JSON.stringify({ error: 'Empty response from server' }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    let data
+    try {
+      data = JSON.parse(responseText)
+    } catch (parseError) {
+      console.error('Failed to parse response as JSON:', responseText)
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON response from server', raw: responseText }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
     console.log(`Response from n8n: ${JSON.stringify(data)}`)
 
     if (!response.ok) {
