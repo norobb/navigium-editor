@@ -33,25 +33,19 @@ serve(async (req) => {
         )
     }
 
-    // Build headers + query params from params (some n8n setups read either)
+    // Build headers from params - no query parameters, only headers
     const requestHeaders: Record<string, string> = {
       'x-internal-key': INTERNAL_KEY,
     }
 
-    const queryParams = new URLSearchParams()
-
     for (const [key, value] of Object.entries(params)) {
-      const v = String(value)
-      requestHeaders[key] = v
-      queryParams.append(key, v)
+      requestHeaders[key] = String(value)
     }
 
-    const fullUrl = queryParams.toString() ? `${n8nUrl}?${queryParams.toString()}` : n8nUrl
-
-    console.log(`Proxying GET request to: ${fullUrl}`)
+    console.log(`Proxying GET request to: ${n8nUrl}`)
     console.log(`Headers: ${JSON.stringify(requestHeaders)}`)
 
-    const response = await fetch(fullUrl, {
+    const response = await fetch(n8nUrl, {
       method: 'GET',
       headers: requestHeaders,
     })
