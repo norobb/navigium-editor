@@ -22,7 +22,7 @@ export default function Dashboard() {
       return;
     }
     setSession(currentSession);
-    setTargetPoints(currentSession.aktuellerKarteikasten.toString());
+    setTargetPoints(currentSession.gesamtpunkteKarteikasten.toString());
   }, [navigate]);
 
   const handleLogout = () => {
@@ -49,7 +49,7 @@ export default function Dashboard() {
       
       saveSession(updatedSession);
       setSession(updatedSession);
-      setTargetPoints(response.aktuellerKarteikasten.toString());
+      setTargetPoints(response.gesamtpunkteKarteikasten.toString());
 
       toast({
         title: "Punkte aktualisiert!",
@@ -80,7 +80,8 @@ export default function Dashboard() {
       return;
     }
 
-    const diff = target - session.aktuellerKarteikasten;
+    // Calculate diff from gesamtpunkteKarteikasten, not aktuellerKarteikasten
+    const diff = target - session.gesamtpunkteKarteikasten;
     if (diff === 0) {
       toast({
         title: "Keine Änderung",
@@ -119,15 +120,15 @@ export default function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Karteikasten-Punkte</CardTitle>
+              <CardTitle className="text-sm font-medium">Aktueller Karteikasten</CardTitle>
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-4xl font-bold text-primary">
-                {session.aktuellerKarteikasten}
+                {session.aktuellerKarteikasten || "—"}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Aktueller Punktestand
+                Ausgewählter Karteikasten
               </p>
             </CardContent>
           </Card>
@@ -142,7 +143,7 @@ export default function Dashboard() {
                 {session.gesamtpunkteKarteikasten}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Alle Punkte zusammen
+                Deine aktuellen Punkte
               </p>
             </CardContent>
           </Card>
@@ -183,7 +184,7 @@ export default function Dashboard() {
                 </div>
                 {session && targetPoints && !isNaN(parseInt(targetPoints, 10)) && (
                   <p className="text-sm text-muted-foreground">
-                    Differenz: {parseInt(targetPoints, 10) - session.aktuellerKarteikasten} Punkte
+                    Differenz: {parseInt(targetPoints, 10) - session.gesamtpunkteKarteikasten} Punkte
                   </p>
                 )}
               </div>
