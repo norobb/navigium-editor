@@ -18,7 +18,6 @@ serve(async (req) => {
     const { action, ...params } = await req.json()
 
     let n8nUrl: string
-    let method = 'POST'
 
     switch (action) {
       case 'login':
@@ -34,16 +33,20 @@ serve(async (req) => {
         )
     }
 
-    console.log(`Proxying request to: ${n8nUrl}`)
-    console.log(`Params: ${JSON.stringify(params)}`)
+    // Build query string from params
+    const queryParams = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      queryParams.append(key, String(value))
+    }
+    
+    const fullUrl = `${n8nUrl}?${queryParams.toString()}`
+    console.log(`Proxying GET request to: ${fullUrl}`)
 
-    const response = await fetch(n8nUrl, {
-      method,
+    const response = await fetch(fullUrl, {
+      method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'x-internal-key': INTERNAL_KEY,
       },
-      body: JSON.stringify(params),
     })
 
     const data = await response.json()
