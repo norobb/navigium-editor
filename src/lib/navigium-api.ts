@@ -31,7 +31,12 @@ export async function login(
     throw new Error("Login fehlgeschlagen. Bitte überprüfe deine Zugangsdaten.");
   }
 
-  return data;
+  // Ensure values are numbers
+  return {
+    username: data.username || user,
+    aktuellerKarteikasten: parseInt(data.aktuellerKarteikasten, 10) || 0,
+    gesamtpunkteKarteikasten: parseInt(data.gesamtpunkteKarteikasten, 10) || 0,
+  };
 }
 
 export async function setPoints(
@@ -47,7 +52,11 @@ export async function setPoints(
     throw new Error("Punkte konnten nicht geändert werden.");
   }
 
-  return data;
+  // Ensure values are numbers
+  return {
+    aktuellerKarteikasten: parseInt(data.aktuellerKarteikasten, 10) || 0,
+    gesamtpunkteKarteikasten: parseInt(data.gesamtpunkteKarteikasten, 10) || 0,
+  };
 }
 
 export function getSession(): UserSession | null {
