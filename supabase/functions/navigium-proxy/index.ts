@@ -33,20 +33,21 @@ serve(async (req) => {
         )
     }
 
-    // Build query string from params
-    const queryParams = new URLSearchParams()
-    for (const [key, value] of Object.entries(params)) {
-      queryParams.append(key, String(value))
+    // Build headers from params
+    const requestHeaders: Record<string, string> = {
+      'x-internal-key': INTERNAL_KEY,
     }
     
-    const fullUrl = `${n8nUrl}?${queryParams.toString()}`
-    console.log(`Proxying GET request to: ${fullUrl}`)
+    for (const [key, value] of Object.entries(params)) {
+      requestHeaders[key] = String(value)
+    }
+    
+    console.log(`Proxying GET request to: ${n8nUrl}`)
+    console.log(`Headers: ${JSON.stringify(requestHeaders)}`)
 
-    const response = await fetch(fullUrl, {
+    const response = await fetch(n8nUrl, {
       method: 'GET',
-      headers: {
-        'x-internal-key': INTERNAL_KEY,
-      },
+      headers: requestHeaders,
     })
 
     const data = await response.json()
