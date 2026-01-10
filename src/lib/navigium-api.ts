@@ -23,7 +23,7 @@ export interface UserSession {
 export interface LogEntry {
   id: string;
   timestamp: Date;
-  type: 'login' | 'setpoints' | 'getpoints';
+  type: 'login' | 'setpoints' | 'points';
   request: {
     url: string;
     headers: Record<string, string>;
@@ -142,7 +142,7 @@ export async function getPoints(
   name: string,
   lang: string = "LA"
 ): Promise<SetPointsResponse> {
-  const { data } = await makeRequest('getpoints', { name, lang }, 'getpoints');
+  const { data } = await makeRequest('points', { name, lang }, 'points');
   const response = data as Record<string, unknown>;
 
   return {
