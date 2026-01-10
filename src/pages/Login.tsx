@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { login, saveSession } from "@/lib/navigium-api";
 import { Loader2, LogIn } from "lucide-react";
@@ -11,7 +12,7 @@ import { Loader2, LogIn } from "lucide-react";
 export default function Login() {
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
-  const [lang, setLang] = useState("de");
+  const [lang, setLang] = useState("LA");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -86,14 +87,16 @@ export default function Login() {
 
             <div className="space-y-2">
               <Label htmlFor="lang">Sprache</Label>
-              <Input
-                id="lang"
-                type="text"
-                placeholder="de"
-                value={lang}
-                onChange={(e) => setLang(e.target.value)}
-                disabled={isLoading}
-              />
+              <Select value={lang} onValueChange={setLang} disabled={isLoading}>
+                <SelectTrigger className="w-full bg-background">
+                  <SelectValue placeholder="Sprache wählen" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="LA">Latein</SelectItem>
+                  <SelectItem value="GRC">Griechisch</SelectItem>
+                  <SelectItem value="EN">Englisch</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
