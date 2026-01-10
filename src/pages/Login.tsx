@@ -26,6 +26,7 @@ export default function Login() {
       
       saveSession({
         username: response.username,
+        password, // Store password for session refresh
         lang,
         aktuellerKarteikasten: response.aktuellerKarteikasten,
         gesamtpunkteKarteikasten: response.gesamtpunkteKarteikasten,
@@ -51,16 +52,16 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Navigium Punkte-Editor</CardTitle>
-          <CardDescription>
+        <CardHeader className="text-center space-y-1">
+          <CardTitle className="text-xl sm:text-2xl font-bold">Navigium Punkte-Editor</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">
             Melde dich mit deinen Navigium-Zugangsdaten an
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="user">Benutzername</Label>
+              <Label htmlFor="user" className="text-sm">Benutzername</Label>
               <Input
                 id="user"
                 type="text"
@@ -69,11 +70,12 @@ export default function Login() {
                 onChange={(e) => setUser(e.target.value)}
                 required
                 disabled={isLoading}
+                className="text-base"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Passwort</Label>
+              <Label htmlFor="password" className="text-sm">Passwort</Label>
               <Input
                 id="password"
                 type="password"
@@ -82,13 +84,14 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                className="text-base"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lang">Sprache</Label>
+              <Label htmlFor="lang" className="text-sm">Sprache</Label>
               <Select value={lang} onValueChange={setLang} disabled={isLoading}>
-                <SelectTrigger className="w-full bg-background">
+                <SelectTrigger className="w-full bg-background text-base">
                   <SelectValue placeholder="Sprache wählen" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover z-50">
@@ -99,7 +102,7 @@ export default function Login() {
               </Select>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-11 text-base" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
