@@ -1,5 +1,4 @@
-const BASE_URL = "https://n8n.nemserver.duckdns.org/webhook/navigium";
-const INTERNAL_KEY = "BANANA";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface LoginResponse {
   username: string;
@@ -22,43 +21,33 @@ export interface UserSession {
 export async function login(
   user: string,
   password: string,
-  lang: string = "de"
+  lang: string = "LA"
 ): Promise<LoginResponse> {
-  const response = await fetch(`${BASE_URL}/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-internal-key": INTERNAL_KEY,
-    },
-    body: JSON.stringify({ user, password, lang }),
+  const { data, error } = await supabase.functions.invoke('navigium-proxy', {
+    body: { action: 'login', user, password, lang },
   });
 
-  if (!response.ok) {
+  if (error) {
     throw new Error("Login fehlgeschlagen. Bitte überprüfe deine Zugangsdaten.");
   }
 
-  return response.json();
+  return data;
 }
 
 export async function setPoints(
   name: string,
   diff: number,
-  lang: string = "de"
+  lang: string = "LA"
 ): Promise<SetPointsResponse> {
-  const response = await fetch(`${BASE_URL}/setpoints`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-internal-key": INTERNAL_KEY,
-    },
-    body: JSON.stringify({ name, diff, lang }),
+  const { data, error } = await supabase.functions.invoke('navigium-proxy', {
+    body: { action: 'setpoints', name, diff, lang },
   });
 
-  if (!response.ok) {
+  if (error) {
     throw new Error("Punkte konnten nicht geändert werden.");
   }
 
-  return response.json();
+  return data;
 }
 
 export function getSession(): UserSession | null {
