@@ -2,19 +2,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface LoginResponse {
   username: string;
-  aktuellerKarteikasten: number;
+  // Name des aktuell ausgewählten Karteikastens
+  aktuellerKarteikasten: string;
+  // Gesamtpunkte als Zahl
   gesamtpunkteKarteikasten: number;
 }
 
 export interface SetPointsResponse {
-  aktuellerKarteikasten: number;
+  aktuellerKarteikasten: string;
   gesamtpunkteKarteikasten: number;
 }
 
 export interface UserSession {
   username: string;
   lang: string;
-  aktuellerKarteikasten: number;
+  aktuellerKarteikasten: string;
   gesamtpunkteKarteikasten: number;
 }
 
@@ -23,19 +25,18 @@ export async function login(
   password: string,
   lang: string = "LA"
 ): Promise<LoginResponse> {
-  const { data, error } = await supabase.functions.invoke('navigium-proxy', {
-    body: { action: 'login', user, password, lang },
+  const { data, error } = await supabase.functions.invoke("navigium-proxy", {
+    body: { action: "login", user, password, lang },
   });
 
   if (error) {
     throw new Error("Login fehlgeschlagen. Bitte überprüfe deine Zugangsdaten.");
   }
 
-  // Ensure values are numbers
   return {
-    username: data.username || user,
-    aktuellerKarteikasten: parseInt(data.aktuellerKarteikasten, 10) || 0,
-    gesamtpunkteKarteikasten: parseInt(data.gesamtpunkteKarteikasten, 10) || 0,
+    username: (data?.username as string) || user,
+    aktuellerKarteikasten: String(data?.aktuellerKarteikasten ?? ""),
+    gesamtpunkteKarteikasten: Number.parseInt(String(data?.gesamtpunkteKarteikasten ?? "0"), 10) || 0,
   };
 }
 
@@ -44,18 +45,17 @@ export async function setPoints(
   diff: number,
   lang: string = "LA"
 ): Promise<SetPointsResponse> {
-  const { data, error } = await supabase.functions.invoke('navigium-proxy', {
-    body: { action: 'setpoints', name, diff, lang },
+  const { data, error } = await supabase.functions.invoke("navigium-proxy", {
+    body: { action: "setpoints", name, diff, lang },
   });
 
   if (error) {
     throw new Error("Punkte konnten nicht geändert werden.");
   }
 
-  // Ensure values are numbers
   return {
-    aktuellerKarteikasten: parseInt(data.aktuellerKarteikasten, 10) || 0,
-    gesamtpunkteKarteikasten: parseInt(data.gesamtpunkteKarteikasten, 10) || 0,
+    aktuellerKarteikasten: String(data?.aktuellerKarteikasten ?? ""),
+    gesamtpunkteKarteikasten: Number.parseInt(String(data?.gesamtpunkteKarteikasten ?? "0"), 10) || 0,
   };
 }
 
