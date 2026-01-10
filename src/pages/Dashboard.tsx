@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getSession, clearSession, setPoints, saveSession, UserSession } from "@/lib/navigium-api";
-import { Loader2, LogOut, Save, Plus, Minus, Trophy, Target } from "lucide-react";
+import { Loader2, LogOut, Save, Plus, Minus, Trophy, Target, RefreshCw } from "lucide-react";
 
 export default function Dashboard() {
   const [session, setSession] = useState<UserSession | null>(null);
@@ -51,10 +51,17 @@ export default function Dashboard() {
       setSession(updatedSession);
       setTargetPoints(response.gesamtpunkteKarteikasten.toString());
 
-      toast({
-        title: "Punkte aktualisiert!",
-        description: `Neuer Punktestand: ${response.aktuellerKarteikasten}`,
-      });
+      if (diff === 0) {
+        toast({
+          title: "Punkte aktualisiert!",
+          description: `Aktueller Punktestand: ${response.gesamtpunkteKarteikasten}`,
+        });
+      } else {
+        toast({
+          title: "Punkte geändert!",
+          description: `Neuer Punktestand: ${response.gesamtpunkteKarteikasten}`,
+        });
+      }
     } catch (error) {
       toast({
         title: "Fehler",
@@ -97,6 +104,11 @@ export default function Dashboard() {
     await handleSetPoints(amount);
   };
 
+  const handleRefresh = async () => {
+    // Call setpoints with diff=0 to get current points without changing them
+    await handleSetPoints(0);
+  };
+
   if (!session) {
     return null;
   }
@@ -110,10 +122,16 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold text-foreground">Navigium Punkte-Editor</h1>
             <p className="text-muted-foreground">Eingeloggt als {session.username}</p>
           </div>
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Ausloggen
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleRefresh} disabled={isLoading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Aktualisieren
+            </Button>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Ausloggen
+            </Button>
+          </div>
         </div>
 
         {/* Points Display */}
