@@ -12,9 +12,11 @@ import {
   getGreetings,
   setGreetingForUser,
   clearAppAuth,
+  getAppPassword,
+  setAppPassword,
   UserGreeting,
 } from "@/lib/navigium-api";
-import { ArrowLeft, Users, MessageSquare, Trash2, Save, Shield, LogOut } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Trash2, Save, Shield, LogOut, Key, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +28,9 @@ export default function AdminPanel() {
   const [newGreeting, setNewGreeting] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editGreeting, setEditGreeting] = useState("");
+  const [currentAppPassword, setCurrentAppPassword] = useState("");
+  const [newAppPassword, setNewAppPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -47,6 +52,7 @@ export default function AdminPanel() {
   const loadData = () => {
     setUsers(getKnownUsers());
     setGreetings(getGreetings());
+    setCurrentAppPassword(getAppPassword());
   };
 
   const handleAddGreeting = () => {
@@ -103,8 +109,38 @@ export default function AdminPanel() {
   const handleResetAppAuth = () => {
     clearAppAuth();
     toast({
-      title: "App-Authentifizierung zurückgesetzt",
-      description: "Alle Benutzer müssen sich erneut mit dem App-Passwort anmelden.",
+      title: "Zurückgesetzt",
+      description: "Alle Benutzer müssen sich erneut anmelden.",
+    });
+  };
+
+  const handleChangePassword = () => {
+    if (!newAppPassword.trim()) {
+      toast({
+        title: "Fehler",
+        description: "Bitte gib ein neues Passwort ein.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (newAppPassword.length < 4) {
+      toast({
+        title: "Fehler",
+        description: "Das Passwort muss mindestens 4 Zeichen haben.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAppPassword(newAppPassword);
+    clearAppAuth(); // Force re-authentication with new password
+    setCurrentAppPassword(newAppPassword);
+    setNewAppPassword("");
+    
+    toast({
+      title: "Passwort geändert",
+      description: "Das App-Passwort wurde erfolgreich geändert.",
     });
   };
 
@@ -122,15 +158,11 @@ export default function AdminPanel() {
                 <Shield className="h-5 w-5 text-primary" />
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground">Admin Panel</h1>
               </div>
-              <p className="text-sm text-muted-foreground">Benutzer und Begrüßungen verwalten</p>
+              <p className="text-sm text-muted-foreground">Benutzer und Einstellungen verwalten</p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
             <ThemeToggle />
-            <Button variant="outline" size="sm" onClick={handleResetAppAuth}>
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline ml-2">App-Auth Reset</span>
-            </Button>
           </div>
         </div>
 
@@ -156,6 +188,61 @@ export default function AdminPanel() {
             </CardContent>
           </Card>
         </div>
+
+        {/* App Password Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+              <Key className="h-4 w-4" />
+              App-Passwort
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Ändere das allgemeine Zugangspasswort für die App
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Aktuelles Passwort</Label>
+              <div className="flex gap-2">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={currentAppPassword}
+                  readOnly
+                  className="font-mono"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">Neues Passwort</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Neues Passwort eingeben"
+                  value={newAppPassword}
+                  onChange={(e) => setNewAppPassword(e.target.value)}
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <Button onClick={handleChangePassword} className="flex-1">
+                  <Save className="mr-2 h-4 w-4" />
+                  Ändern
+                </Button>
+                <Button variant="outline" onClick={handleResetAppAuth}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Reset
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Add Greeting */}
         <Card>
@@ -202,7 +289,7 @@ export default function AdminPanel() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[300px]">
+            <ScrollArea className="h-[250px]">
               {greetings.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   Noch keine Begrüßungen vorhanden
@@ -274,7 +361,7 @@ export default function AdminPanel() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[200px]">
+            <ScrollArea className="h-[150px]">
               {users.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
                   Noch keine Benutzer bekannt
@@ -284,7 +371,7 @@ export default function AdminPanel() {
                   {users.map((user) => (
                     <div
                       key={user}
-                      className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
+                      className="px-3 py-1.5 bg-secondary/80 backdrop-blur-sm text-secondary-foreground rounded-full text-sm border border-border/30"
                     >
                       {user}
                     </div>

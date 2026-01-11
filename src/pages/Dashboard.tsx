@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { getSession, clearSession, setPoints, getPoints, saveSession, refreshLogin, UserSession, isAdmin, getGreetingForUser } from "@/lib/navigium-api";
-import { Loader2, LogOut, Save, Plus, Minus, Trophy, Target, RefreshCw, FileText, Shield } from "lucide-react";
+import { Loader2, LogOut, Save, Plus, Minus, Trophy, Target, RefreshCw, FileText, Shield, Sparkles } from "lucide-react";
 import RequestLog from "@/components/RequestLog";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -81,7 +81,7 @@ export default function Dashboard() {
 
     try {
       // First, set the points
-      const setResponse = await setPoints(session.username, diff, session.lang);
+      await setPoints(session.username, diff, session.lang);
       
       // Then, fetch the current points to confirm
       const getResponse = await getPoints(session.username, session.lang);
@@ -99,13 +99,13 @@ export default function Dashboard() {
 
       if (diff === 0) {
         toast({
-          title: "Punkte aktualisiert!",
-          description: `Aktueller Punktestand: ${getResponse.gesamtpunkteKarteikasten}`,
+          title: "Aktualisiert",
+          description: `Punktestand: ${getResponse.gesamtpunkteKarteikasten}`,
         });
       } else {
         toast({
-          title: "Punkte geändert!",
-          description: `Neuer Punktestand: ${getResponse.gesamtpunkteKarteikasten}`,
+          title: diff > 0 ? `+${diff} Punkte` : `${diff} Punkte`,
+          description: `Neuer Stand: ${getResponse.gesamtpunkteKarteikasten}`,
         });
       }
     } catch (error) {
@@ -169,8 +169,8 @@ export default function Dashboard() {
       setLogRefreshTrigger(prev => prev + 1);
 
       toast({
-        title: "Punkte aktualisiert!",
-        description: `Aktueller Punktestand: ${response.gesamtpunkteKarteikasten}`,
+        title: "Aktualisiert",
+        description: `Punktestand: ${response.gesamtpunkteKarteikasten}`,
       });
     } catch (error) {
       setLogRefreshTrigger(prev => prev + 1);
@@ -189,13 +189,22 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-3 sm:p-4">
-      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+    <div className="min-h-screen p-3 sm:p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-10 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-10 left-10 w-80 h-80 bg-accent/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 relative">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">Navigium Punkte-Editor</h1>
-            <p className="text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary/60" />
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">Navigium Punkte-Editor</h1>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
               {personalGreeting || `Eingeloggt als ${session.username}`}
             </p>
           </div>
@@ -203,21 +212,17 @@ export default function Dashboard() {
             <ThemeToggle />
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline ml-2">Aktualisieren</span>
             </Button>
             <Button variant="outline" size="sm" onClick={() => setShowLog(!showLog)}>
               <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline ml-2">Log</span>
             </Button>
             {isAdmin() && (
               <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
                 <Shield className="h-4 w-4" />
-                <span className="hidden sm:inline ml-2">Admin</span>
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline ml-2">Ausloggen</span>
             </Button>
           </div>
         </div>
@@ -246,7 +251,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl sm:text-4xl font-bold text-primary">
-                {session.gesamtpunkteKarteikasten}
+                {session.gesamtpunkteKarteikasten.toLocaleString('de-DE')}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Deine aktuellen Punkte
@@ -257,15 +262,15 @@ export default function Dashboard() {
 
         {/* Points Editor */}
         <Card>
-          <CardHeader className="pb-3 sm:pb-6">
+          <CardHeader className="pb-3 sm:pb-4">
             <CardTitle className="text-base sm:text-lg">Punkte bearbeiten</CardTitle>
             <CardDescription className="text-xs sm:text-sm">
               Gib den neuen Punktestand ein oder nutze die Schnellauswahl
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 sm:space-y-6">
+          <CardContent className="space-y-4 sm:space-y-5">
             {/* Manual Input */}
-            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="targetPoints" className="text-sm">Neuer Punktestand</Label>
                 <div className="flex flex-col sm:flex-row gap-2">
@@ -276,9 +281,9 @@ export default function Dashboard() {
                     value={targetPoints}
                     onChange={(e) => setTargetPoints(e.target.value)}
                     disabled={isLoading}
-                    className="flex-1"
+                    className="flex-1 h-11"
                   />
-                  <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+                  <Button type="submit" disabled={isLoading} className="w-full sm:w-auto h-11">
                     {isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
@@ -290,7 +295,7 @@ export default function Dashboard() {
                   </Button>
                 </div>
                 {session && targetPoints && !isNaN(parseInt(targetPoints, 10)) && (
-                  <p className="text-xs sm:text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Differenz: {parseInt(targetPoints, 10) - session.gesamtpunkteKarteikasten} Punkte
                   </p>
                 )}
@@ -306,7 +311,7 @@ export default function Dashboard() {
                   size="sm"
                   onClick={() => handleQuickChange(-100)}
                   disabled={isLoading}
-                  className="text-xs sm:text-sm"
+                  className="text-xs sm:text-sm h-9"
                 >
                   <Minus className="mr-1 h-3 w-3" />
                   100
@@ -316,7 +321,7 @@ export default function Dashboard() {
                   size="sm"
                   onClick={() => handleQuickChange(-10)}
                   disabled={isLoading}
-                  className="text-xs sm:text-sm"
+                  className="text-xs sm:text-sm h-9"
                 >
                   <Minus className="mr-1 h-3 w-3" />
                   10
@@ -326,7 +331,7 @@ export default function Dashboard() {
                   size="sm"
                   onClick={() => handleQuickChange(10)}
                   disabled={isLoading}
-                  className="text-xs sm:text-sm"
+                  className="text-xs sm:text-sm h-9"
                 >
                   <Plus className="mr-1 h-3 w-3" />
                   10
@@ -336,7 +341,7 @@ export default function Dashboard() {
                   size="sm"
                   onClick={() => handleQuickChange(100)}
                   disabled={isLoading}
-                  className="text-xs sm:text-sm"
+                  className="text-xs sm:text-sm h-9"
                 >
                   <Plus className="mr-1 h-3 w-3" />
                   100
@@ -346,7 +351,7 @@ export default function Dashboard() {
                   size="sm"
                   onClick={() => handleQuickChange(1000)}
                   disabled={isLoading}
-                  className="col-span-2 sm:col-span-1 text-xs sm:text-sm"
+                  className="col-span-2 sm:col-span-1 text-xs sm:text-sm h-9"
                 >
                   <Plus className="mr-1 h-3 w-3" />
                   1000

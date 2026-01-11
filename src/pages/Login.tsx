@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { login, saveSession, addKnownUser, getGreetingForUser } from "@/lib/navigium-api";
-import { Loader2, LogIn } from "lucide-react";
+import { Loader2, LogIn, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Login() {
@@ -57,14 +57,25 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-1/4 w-64 h-64 bg-primary/15 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-1/4 w-72 h-72 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+      </div>
+      
+      <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
       </div>
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-1">
-          <CardTitle className="text-xl sm:text-2xl font-bold">Navigium Punkte-Editor</CardTitle>
-          <CardDescription className="text-xs sm:text-sm">
+      
+      <Card className="w-full max-w-md relative">
+        <CardHeader className="text-center space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <Sparkles className="h-5 w-5 text-primary/60" />
+            <CardTitle className="text-xl sm:text-2xl font-bold">Navigium Punkte-Editor</CardTitle>
+            <Sparkles className="h-5 w-5 text-primary/60" />
+          </div>
+          <CardDescription className="text-sm">
             Melde dich mit deinen Navigium-Zugangsdaten an
           </CardDescription>
         </CardHeader>
@@ -80,7 +91,7 @@ export default function Login() {
                 onChange={(e) => setUser(e.target.value)}
                 required
                 disabled={isLoading}
-                className="text-base"
+                className="h-11"
               />
             </div>
 
@@ -94,17 +105,17 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
-                className="text-base"
+                className="h-11"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="lang" className="text-sm">Sprache</Label>
               <Select value={lang} onValueChange={setLang} disabled={isLoading}>
-                <SelectTrigger className="w-full bg-background text-base">
+                <SelectTrigger className="w-full h-11">
                   <SelectValue placeholder="Sprache wählen" />
                 </SelectTrigger>
-                <SelectContent className="bg-popover z-50">
+                <SelectContent className="bg-popover/95 backdrop-blur-xl border-border/50">
                   <SelectItem value="LA">Latein</SelectItem>
                   <SelectItem value="GRC">Griechisch</SelectItem>
                   <SelectItem value="EN">Englisch</SelectItem>

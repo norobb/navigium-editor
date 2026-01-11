@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { authenticateApp, checkAppPassword } from "@/lib/navigium-api";
-import { Lock, Unlock } from "lucide-react";
+import { Lock, Unlock, Sparkles } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 interface AppPasswordGateProps {
@@ -24,7 +24,7 @@ export default function AppPasswordGate({ children }: AppPasswordGateProps) {
       setIsAuthenticated(true);
       toast({
         title: "Zugang gewährt",
-        description: "Du kannst jetzt die App verwenden.",
+        description: "Willkommen! Du kannst jetzt die App verwenden.",
       });
     } else {
       toast({
@@ -40,35 +40,48 @@ export default function AppPasswordGate({ children }: AppPasswordGateProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-accent/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+      </div>
+      
+      <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
       </div>
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center space-y-1">
-          <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-            <Lock className="h-6 w-6 text-primary" />
+      
+      <Card className="w-full max-w-sm relative">
+        <CardHeader className="text-center space-y-3 pb-4">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-sm border border-border/30">
+            <Lock className="h-7 w-7 text-primary" />
           </div>
-          <CardTitle className="text-xl font-bold">Geschützter Bereich</CardTitle>
-          <CardDescription className="text-sm">
-            Bitte gib das App-Passwort ein um fortzufahren
-          </CardDescription>
+          <div className="space-y-1">
+            <div className="flex items-center justify-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary/60" />
+              <CardTitle className="text-xl font-bold">Geschützter Bereich</CardTitle>
+              <Sparkles className="h-4 w-4 text-primary/60" />
+            </div>
+            <CardDescription className="text-sm">
+              Bitte gib das App-Passwort ein
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="appPassword">Passwort</Label>
+              <Label htmlFor="appPassword" className="text-sm">Passwort</Label>
               <Input
                 id="appPassword"
                 type="password"
-                placeholder="App-Passwort eingeben"
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="text-base"
+                className="text-base h-11"
               />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full h-11">
               <Unlock className="mr-2 h-4 w-4" />
               Zugang erhalten
             </Button>
