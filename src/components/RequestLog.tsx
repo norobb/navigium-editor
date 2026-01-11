@@ -46,7 +46,7 @@ export default function RequestLog({ refreshTrigger }: RequestLogProps) {
         return 'default';
       case 'setpoints':
         return 'secondary';
-      case 'getpoints':
+      case 'points':
         return 'outline';
       default:
         return 'default';

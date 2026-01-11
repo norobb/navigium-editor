@@ -1,6 +1,9 @@
 const N8N_BASE_URL = "https://n8n.nemserver.duckdns.org/webhook/navigium";
 const INTERNAL_KEY = "BANANA";
 
+// App password for general access
+const APP_PASSWORD = "navigium2024";
+
 export interface LoginResponse {
   username: string;
   aktuellerKarteikasten: string;
@@ -18,6 +21,11 @@ export interface UserSession {
   lang: string;
   aktuellerKarteikasten: string;
   gesamtpunkteKarteikasten: number;
+}
+
+export interface UserGreeting {
+  username: string;
+  greeting: string;
 }
 
 export interface LogEntry {
@@ -39,10 +47,15 @@ export interface LogEntry {
 const logs: LogEntry[] = [];
 const MAX_LOGS = 100;
 
+// Generate unique ID without crypto.randomUUID (compatibility fix)
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+}
+
 function addLog(entry: Omit<LogEntry, 'id' | 'timestamp'>): LogEntry {
   const logEntry: LogEntry = {
     ...entry,
-    id: crypto.randomUUID(),
+    id: generateId(),
     timestamp: new Date(),
   };
   logs.unshift(logEntry);
@@ -180,5 +193,75 @@ export async function refreshLogin(): Promise<LoginResponse | null> {
   } catch (error) {
     console.error('Refresh login failed:', error);
     return null;
+  }
+}
+
+// App Password Functions
+export function checkAppPassword(): boolean {
+  return localStorage.getItem("app_authenticated") === "true";
+}
+
+export function authenticateApp(password: string): boolean {
+  if (password === APP_PASSWORD) {
+    localStorage.setItem("app_authenticated", "true");
+    return true;
+  }
+  return false;
+}
+
+export function clearAppAuth(): void {
+  localStorage.removeItem("app_authenticated");
+}
+
+// Admin Check
+export function isAdmin(): boolean {
+  const session = getSession();
+  return session?.username === "mahyno2022";
+}
+
+// User Greetings Management
+export function getGreetings(): UserGreeting[] {
+  const greetings = localStorage.getItem("user_greetings");
+  return greetings ? JSON.parse(greetings) : [];
+}
+
+export function saveGreetings(greetings: UserGreeting[]): void {
+  localStorage.setItem("user_greetings", JSON.stringify(greetings));
+}
+
+export function getGreetingForUser(username: string): string | null {
+  const greetings = getGreetings();
+  const greeting = greetings.find(g => g.username.toLowerCase() === username.toLowerCase());
+  return greeting?.greeting || null;
+}
+
+export function setGreetingForUser(username: string, greeting: string): void {
+  const greetings = getGreetings();
+  const existing = greetings.findIndex(g => g.username.toLowerCase() === username.toLowerCase());
+  
+  if (greeting.trim() === "") {
+    if (existing !== -1) {
+      greetings.splice(existing, 1);
+    }
+  } else if (existing !== -1) {
+    greetings[existing] = { username, greeting };
+  } else {
+    greetings.push({ username, greeting });
+  }
+  
+  saveGreetings(greetings);
+}
+
+// Known Users Management
+export function getKnownUsers(): string[] {
+  const users = localStorage.getItem("known_users");
+  return users ? JSON.parse(users) : [];
+}
+
+export function addKnownUser(username: string): void {
+  const users = getKnownUsers();
+  if (!users.includes(username)) {
+    users.push(username);
+    localStorage.setItem("known_users", JSON.stringify(users));
   }
 }

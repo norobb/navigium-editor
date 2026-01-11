@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { login, saveSession } from "@/lib/navigium-api";
+import { login, saveSession, addKnownUser, getGreetingForUser } from "@/lib/navigium-api";
 import { Loader2, LogIn } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Login() {
   const [user, setUser] = useState("");
@@ -24,6 +25,9 @@ export default function Login() {
     try {
       const response = await login(user, password, lang);
       
+      // Add user to known users
+      addKnownUser(response.username);
+      
       saveSession({
         username: response.username,
         password, // Store password for session refresh
@@ -32,9 +36,12 @@ export default function Login() {
         gesamtpunkteKarteikasten: response.gesamtpunkteKarteikasten,
       });
 
+      // Check for personalized greeting
+      const personalGreeting = getGreetingForUser(response.username);
+      
       toast({
         title: "Erfolgreich eingeloggt!",
-        description: `Willkommen zurück, ${response.username}`,
+        description: personalGreeting || `Willkommen zurück, ${response.username}`,
       });
 
       navigate("/dashboard");
@@ -51,6 +58,9 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-1">
           <CardTitle className="text-xl sm:text-2xl font-bold">Navigium Punkte-Editor</CardTitle>

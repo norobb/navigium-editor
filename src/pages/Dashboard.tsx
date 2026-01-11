@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { getSession, clearSession, setPoints, getPoints, saveSession, refreshLogin, UserSession } from "@/lib/navigium-api";
-import { Loader2, LogOut, Save, Plus, Minus, Trophy, Target, RefreshCw, FileText } from "lucide-react";
+import { getSession, clearSession, setPoints, getPoints, saveSession, refreshLogin, UserSession, isAdmin, getGreetingForUser } from "@/lib/navigium-api";
+import { Loader2, LogOut, Save, Plus, Minus, Trophy, Target, RefreshCw, FileText, Shield } from "lucide-react";
 import RequestLog from "@/components/RequestLog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LOGIN_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [logRefreshTrigger, setLogRefreshTrigger] = useState(0);
   const [showLog, setShowLog] = useState(false);
+  const [personalGreeting, setPersonalGreeting] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -53,6 +55,7 @@ export default function Dashboard() {
     }
     setSession(currentSession);
     setTargetPoints(currentSession.gesamtpunkteKarteikasten.toString());
+    setPersonalGreeting(getGreetingForUser(currentSession.username));
 
     // Initial refresh login
     refreshSession();
@@ -192,9 +195,12 @@ export default function Dashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-foreground">Navigium Punkte-Editor</h1>
-            <p className="text-sm text-muted-foreground">Eingeloggt als {session.username}</p>
+            <p className="text-sm text-muted-foreground">
+              {personalGreeting || `Eingeloggt als ${session.username}`}
+            </p>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <ThemeToggle />
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
               <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline ml-2">Aktualisieren</span>
@@ -203,6 +209,12 @@ export default function Dashboard() {
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline ml-2">Log</span>
             </Button>
+            {isAdmin() && (
+              <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
+                <Shield className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">Admin</span>
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline ml-2">Ausloggen</span>
