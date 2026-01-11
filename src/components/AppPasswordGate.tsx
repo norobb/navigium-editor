@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,14 +13,25 @@ interface AppPasswordGateProps {
 }
 
 export default function AppPasswordGate({ children }: AppPasswordGateProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState(checkAppPassword());
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const auth = await checkAppPassword();
+      setIsAuthenticated(auth);
+      setIsLoading(false);
+    };
+    checkAuth();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (authenticateApp(password)) {
+    const success = await authenticateApp(password);
+    if (success) {
       setIsAuthenticated(true);
       toast({
         title: "Zugang gewährt",
@@ -34,6 +45,14 @@ export default function AppPasswordGate({ children }: AppPasswordGateProps) {
       });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (isAuthenticated) {
     return <>{children}</>;

@@ -7,14 +7,107 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.1"
-  }
   public: {
     Tables: {
-      [_ in never]: never
+      app_settings: {
+        Row: {
+          id: number
+          key: string
+          value: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          key: string
+          value: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          key?: string
+          value?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          id: number
+          username: string
+          password_hash: string
+          lang: string
+          aktueller_karteikasten: string | null
+          gesamtpunkte_karteikasten: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          username: string
+          password_hash: string
+          lang?: string
+          aktueller_karteikasten?: string | null
+          gesamtpunkte_karteikasten?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          username?: string
+          password_hash?: string
+          lang?: string
+          aktueller_karteikasten?: string | null
+          gesamtpunkte_karteikasten?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_greetings: {
+        Row: {
+          id: number
+          username: string
+          greeting: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          username: string
+          greeting: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          username?: string
+          greeting?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      known_users: {
+        Row: {
+          id: number
+          username: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          username: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          username?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

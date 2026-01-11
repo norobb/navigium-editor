@@ -35,27 +35,35 @@ export default function AdminPanel() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const session = getSession();
-    if (!session || !isAdmin()) {
-      toast({
-        title: "Kein Zugang",
-        description: "Du hast keinen Zugang zum Admin Panel.",
-        variant: "destructive",
-      });
-      navigate("/dashboard");
-      return;
-    }
+    const initAdmin = async () => {
+      const session = await getSession();
+      const admin = await isAdmin();
+      if (!session || !admin) {
+        toast({
+          title: "Kein Zugang",
+          description: "Du hast keinen Zugang zum Admin Panel.",
+          variant: "destructive",
+        });
+        navigate("/dashboard");
+        return;
+      }
 
-    loadData();
+      await loadData();
+    };
+
+    initAdmin();
   }, [navigate, toast]);
 
-  const loadData = () => {
-    setUsers(getKnownUsers());
-    setGreetings(getGreetings());
-    setCurrentAppPassword(getAppPassword());
+  const loadData = async () => {
+    const knownUsers = await getKnownUsers();
+    const userGreetings = await getGreetings();
+    const appPassword = await getAppPassword();
+    setUsers(knownUsers);
+    setGreetings(userGreetings);
+    setCurrentAppPassword(appPassword);
   };
 
-  const handleAddGreeting = () => {
+  const handleAddGreeting = async () => {
     if (!newUsername.trim()) {
       toast({
         title: "Fehler",
@@ -65,10 +73,10 @@ export default function AdminPanel() {
       return;
     }
 
-    setGreetingForUser(newUsername.trim(), newGreeting.trim());
+    await setGreetingForUser(newUsername.trim(), newGreeting.trim());
     setNewUsername("");
     setNewGreeting("");
-    loadData();
+    await loadData();
     
     toast({
       title: "Gespeichert",
@@ -82,13 +90,13 @@ export default function AdminPanel() {
     setEditGreeting(current?.greeting || "");
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingUser) return;
     
-    setGreetingForUser(editingUser, editGreeting);
+    await setGreetingForUser(editingUser, editGreeting);
     setEditingUser(null);
     setEditGreeting("");
-    loadData();
+    await loadData();
     
     toast({
       title: "Gespeichert",
@@ -96,9 +104,9 @@ export default function AdminPanel() {
     });
   };
 
-  const handleDeleteGreeting = (username: string) => {
-    setGreetingForUser(username, "");
-    loadData();
+  const handleDeleteGreeting = async (username: string) => {
+    await setGreetingForUser(username, "");
+    await loadData();
     
     toast({
       title: "Gelöscht",
@@ -114,7 +122,7 @@ export default function AdminPanel() {
     });
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!newAppPassword.trim()) {
       toast({
         title: "Fehler",
@@ -133,7 +141,7 @@ export default function AdminPanel() {
       return;
     }
 
-    setAppPassword(newAppPassword);
+    await setAppPassword(newAppPassword);
     clearAppAuth(); // Force re-authentication with new password
     setCurrentAppPassword(newAppPassword);
     setNewAppPassword("");

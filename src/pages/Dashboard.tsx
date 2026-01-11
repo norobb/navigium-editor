@@ -24,7 +24,7 @@ export default function Dashboard() {
   const { toast } = useToast();
 
   const refreshSession = useCallback(async () => {
-    const currentSession = getSession();
+    const currentSession = await getSession();
     if (!currentSession) {
       navigate("/");
       return;
@@ -48,14 +48,19 @@ export default function Dashboard() {
   }, [navigate]);
 
   useEffect(() => {
-    const currentSession = getSession();
-    if (!currentSession) {
-      navigate("/");
-      return;
-    }
-    setSession(currentSession);
-    setTargetPoints(currentSession.gesamtpunkteKarteikasten.toString());
-    setPersonalGreeting(getGreetingForUser(currentSession.username));
+    const initSession = async () => {
+      const currentSession = await getSession();
+      if (!currentSession) {
+        navigate("/");
+        return;
+      }
+      setSession(currentSession);
+      setTargetPoints(currentSession.gesamtpunkteKarteikasten.toString());
+      const greeting = await getGreetingForUser(currentSession.username);
+      setPersonalGreeting(greeting);
+    };
+
+    initSession();
 
     // Initial refresh login
     refreshSession();
