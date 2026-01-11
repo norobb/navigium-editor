@@ -1,8 +1,10 @@
+import { encrypt, decrypt, encryptObject, decryptObject } from "./crypto";
+
 const N8N_BASE_URL = "https://n8n.nemserver.duckdns.org/webhook/navigium";
 const INTERNAL_KEY = "BANANA";
 
-// App password for general access
-const APP_PASSWORD = "navigium2024";
+// Default app password (can be changed in admin panel)
+const DEFAULT_APP_PASSWORD = "cheater2025";
 
 export interface LoginResponse {
   username: string;
@@ -164,16 +166,34 @@ export async function getPoints(
   };
 }
 
+// Encrypted session management
 export function getSession(): UserSession | null {
-  const session = localStorage.getItem("navigium_session");
-  return session ? JSON.parse(session) : null;
+  const encrypted = localStorage.getItem("navigium_session_v2");
+  if (encrypted) {
+    return decryptObject<UserSession>(encrypted);
+  }
+  // Migrate from old unencrypted session
+  const oldSession = localStorage.getItem("navigium_session");
+  if (oldSession) {
+    try {
+      const session = JSON.parse(oldSession) as UserSession;
+      saveSession(session);
+      localStorage.removeItem("navigium_session");
+      return session;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 export function saveSession(session: UserSession): void {
-  localStorage.setItem("navigium_session", JSON.stringify(session));
+  const encrypted = encryptObject(session);
+  localStorage.setItem("navigium_session_v2", encrypted);
 }
 
 export function clearSession(): void {
+  localStorage.removeItem("navigium_session_v2");
   localStorage.removeItem("navigium_session");
 }
 
@@ -196,13 +216,28 @@ export async function refreshLogin(): Promise<LoginResponse | null> {
   }
 }
 
-// App Password Functions
+// App Password Functions with encryption
+export function getAppPassword(): string {
+  const encrypted = localStorage.getItem("app_password_v2");
+  if (encrypted) {
+    const decrypted = decrypt(encrypted);
+    return decrypted || DEFAULT_APP_PASSWORD;
+  }
+  return DEFAULT_APP_PASSWORD;
+}
+
+export function setAppPassword(password: string): void {
+  const encrypted = encrypt(password);
+  localStorage.setItem("app_password_v2", encrypted);
+}
+
 export function checkAppPassword(): boolean {
   return localStorage.getItem("app_authenticated") === "true";
 }
 
 export function authenticateApp(password: string): boolean {
-  if (password === APP_PASSWORD) {
+  const correctPassword = getAppPassword();
+  if (password === correctPassword) {
     localStorage.setItem("app_authenticated", "true");
     return true;
   }
@@ -219,14 +254,30 @@ export function isAdmin(): boolean {
   return session?.username === "mahyno2022";
 }
 
-// User Greetings Management
+// User Greetings Management with encryption
 export function getGreetings(): UserGreeting[] {
-  const greetings = localStorage.getItem("user_greetings");
-  return greetings ? JSON.parse(greetings) : [];
+  const encrypted = localStorage.getItem("user_greetings_v2");
+  if (encrypted) {
+    return decryptObject<UserGreeting[]>(encrypted) || [];
+  }
+  // Migrate from old unencrypted greetings
+  const oldGreetings = localStorage.getItem("user_greetings");
+  if (oldGreetings) {
+    try {
+      const greetings = JSON.parse(oldGreetings) as UserGreeting[];
+      saveGreetings(greetings);
+      localStorage.removeItem("user_greetings");
+      return greetings;
+    } catch {
+      return [];
+    }
+  }
+  return [];
 }
 
 export function saveGreetings(greetings: UserGreeting[]): void {
-  localStorage.setItem("user_greetings", JSON.stringify(greetings));
+  const encrypted = encryptObject(greetings);
+  localStorage.setItem("user_greetings_v2", encrypted);
 }
 
 export function getGreetingForUser(username: string): string | null {
@@ -252,16 +303,36 @@ export function setGreetingForUser(username: string, greeting: string): void {
   saveGreetings(greetings);
 }
 
-// Known Users Management
+// Known Users Management with encryption
 export function getKnownUsers(): string[] {
-  const users = localStorage.getItem("known_users");
-  return users ? JSON.parse(users) : [];
+  const encrypted = localStorage.getItem("known_users_v2");
+  if (encrypted) {
+    return decryptObject<string[]>(encrypted) || [];
+  }
+  // Migrate from old unencrypted users
+  const oldUsers = localStorage.getItem("known_users");
+  if (oldUsers) {
+    try {
+      const users = JSON.parse(oldUsers) as string[];
+      saveKnownUsers(users);
+      localStorage.removeItem("known_users");
+      return users;
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+export function saveKnownUsers(users: string[]): void {
+  const encrypted = encryptObject(users);
+  localStorage.setItem("known_users_v2", encrypted);
 }
 
 export function addKnownUser(username: string): void {
   const users = getKnownUsers();
   if (!users.includes(username)) {
     users.push(username);
-    localStorage.setItem("known_users", JSON.stringify(users));
+    saveKnownUsers(users);
   }
 }
