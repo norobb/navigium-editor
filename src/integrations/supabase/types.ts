@@ -7,79 +7,104 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.1"
-  }
   public: {
     Tables: {
       app_settings: {
         Row: {
-          created_at: string
-          id: string
+          id: number
           key: string
-          updated_at: string
           value: string
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          created_at?: string
-          id?: string
+          id?: number
           key: string
-          updated_at?: string
           value: string
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          created_at?: string
-          id?: string
+          id?: number
           key?: string
-          updated_at?: string
           value?: string
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
-      known_users: {
+      user_sessions: {
         Row: {
-          created_at: string
-          id: string
-          last_login: string
+          id: number
           username: string
+          password_hash: string
+          lang: string
+          aktueller_karteikasten: string | null
+          gesamtpunkte_karteikasten: number
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          created_at?: string
-          id?: string
-          last_login?: string
+          id?: number
           username: string
+          password_hash: string
+          lang?: string
+          aktueller_karteikasten?: string | null
+          gesamtpunkte_karteikasten?: number
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          created_at?: string
-          id?: string
-          last_login?: string
+          id?: number
           username?: string
+          password_hash?: string
+          lang?: string
+          aktueller_karteikasten?: string | null
+          gesamtpunkte_karteikasten?: number
+          created_at?: string
+          updated_at?: string
         }
         Relationships: []
       }
       user_greetings: {
         Row: {
-          created_at: string
-          greeting: string
-          id: string
-          updated_at: string
+          id: number
           username: string
+          greeting: string
+          created_at: string
+          updated_at: string
         }
         Insert: {
-          created_at?: string
-          greeting: string
-          id?: string
-          updated_at?: string
+          id?: number
           username: string
+          greeting: string
+          created_at?: string
+          updated_at?: string
         }
         Update: {
-          created_at?: string
-          greeting?: string
-          id?: string
-          updated_at?: string
+          id?: number
           username?: string
+          greeting?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      known_users: {
+        Row: {
+          id: number
+          username: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          username: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          username?: string
+          created_at?: string
         }
         Relationships: []
       }

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { getLogs, clearLogs, LogEntry } from "@/lib/navigium-api";
-import { Trash2, RefreshCw, ChevronDown, ChevronUp, Database, Globe } from "lucide-react";
+import { Trash2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface RequestLogProps {
@@ -48,29 +48,8 @@ export default function RequestLog({ refreshTrigger }: RequestLogProps) {
         return 'secondary';
       case 'points':
         return 'outline';
-      case 'db_read':
-        return 'outline';
-      case 'db_write':
-        return 'secondary';
       default:
         return 'default';
-    }
-  };
-
-  const getTypeIcon = (type: LogEntry['type']) => {
-    if (type === 'db_read' || type === 'db_write') {
-      return <Database className="h-3 w-3 mr-1" />;
-    }
-    return <Globe className="h-3 w-3 mr-1" />;
-  };
-
-  const getTypeLabel = (type: LogEntry['type']): string => {
-    switch (type) {
-      case 'login': return 'LOGIN';
-      case 'setpoints': return 'SET PTS';
-      case 'points': return 'GET PTS';
-      case 'db_read': return 'DB READ';
-      case 'db_write': return 'DB WRITE';
     }
   };
 
@@ -115,9 +94,8 @@ export default function RequestLog({ refreshTrigger }: RequestLogProps) {
                     <CollapsibleTrigger className="w-full">
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant={getTypeBadgeVariant(log.type)} className="text-xs flex items-center">
-                            {getTypeIcon(log.type)}
-                            {getTypeLabel(log.type)}
+                          <Badge variant={getTypeBadgeVariant(log.type)} className="text-xs">
+                            {log.type.toUpperCase()}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
                             {formatTime(log.timestamp)}

@@ -16,7 +16,7 @@ import {
   setAppPassword,
   UserGreeting,
 } from "@/lib/navigium-api";
-import { ArrowLeft, Users, MessageSquare, Trash2, Save, Shield, LogOut, Key, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Trash2, Save, Shield, LogOut, Key, Eye, EyeOff } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,14 +31,14 @@ export default function AdminPanel() {
   const [currentAppPassword, setCurrentAppPassword] = useState("");
   const [newAppPassword, setNewAppPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const initializeAdmin = async () => {
-      const session = getSession();
-      if (!session || !isAdmin()) {
+    const initAdmin = async () => {
+      const session = await getSession();
+      const admin = await isAdmin();
+      if (!session || !admin) {
         toast({
           title: "Kein Zugang",
           description: "Du hast keinen Zugang zum Admin Panel.",
@@ -51,30 +51,16 @@ export default function AdminPanel() {
       await loadData();
     };
 
-    initializeAdmin();
+    initAdmin();
   }, [navigate, toast]);
 
   const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const [usersData, greetingsData, passwordData] = await Promise.all([
-        getKnownUsers(),
-        getGreetings(),
-        getAppPassword(),
-      ]);
-      setUsers(usersData);
-      setGreetings(greetingsData);
-      setCurrentAppPassword(passwordData);
-    } catch (error) {
-      console.error('Failed to load data:', error);
-      toast({
-        title: "Fehler",
-        description: "Daten konnten nicht geladen werden.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    const knownUsers = await getKnownUsers();
+    const userGreetings = await getGreetings();
+    const appPassword = await getAppPassword();
+    setUsers(knownUsers);
+    setGreetings(userGreetings);
+    setCurrentAppPassword(appPassword);
   };
 
   const handleAddGreeting = async () => {
@@ -88,15 +74,13 @@ export default function AdminPanel() {
     }
 
     await setGreetingForUser(newUsername.trim(), newGreeting.trim());
-    
-    const savedUsername = newUsername;
     setNewUsername("");
     setNewGreeting("");
     await loadData();
     
     toast({
       title: "Gespeichert",
-      description: `Begrüßung für ${savedUsername} wurde gespeichert.`,
+      description: `Begrüßung für ${newUsername} wurde gespeichert.`,
     });
   };
 
@@ -110,7 +94,6 @@ export default function AdminPanel() {
     if (!editingUser) return;
     
     await setGreetingForUser(editingUser, editGreeting);
-    
     setEditingUser(null);
     setEditGreeting("");
     await loadData();
@@ -165,7 +148,7 @@ export default function AdminPanel() {
     
     toast({
       title: "Passwort geändert",
-      description: "Das App-Passwort wurde erfolgreich in der Datenbank gespeichert.",
+      description: "Das App-Passwort wurde erfolgreich geändert.",
     });
   };
 
@@ -183,14 +166,10 @@ export default function AdminPanel() {
                 <Shield className="h-5 w-5 text-primary" />
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground">Admin Panel</h1>
               </div>
-              <p className="text-sm text-muted-foreground">Benutzer und Einstellungen verwalten (Datenbank)</p>
+              <p className="text-sm text-muted-foreground">Benutzer und Einstellungen verwalten</p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={loadData} disabled={isLoading}>
-              <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
-              Aktualisieren
-            </Button>
             <ThemeToggle />
           </div>
         </div>
@@ -414,4 +393,3 @@ export default function AdminPanel() {
     </div>
   );
 }
-

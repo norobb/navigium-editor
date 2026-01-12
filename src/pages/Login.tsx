@@ -37,7 +37,7 @@ export default function Login() {
       });
 
       // Check for personalized greeting
-      const personalGreeting = response.greeting || await getGreetingForUser(response.username);
+      const personalGreeting = getGreetingForUser(response.username);
       
       toast({
         title: "Erfolgreich eingeloggt!",
