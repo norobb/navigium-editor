@@ -73,15 +73,33 @@ export default function AdminPanel() {
       return;
     }
 
-    await setGreetingForUser(newUsername.trim(), newGreeting.trim());
-    setNewUsername("");
-    setNewGreeting("");
-    await loadData();
-    
-    toast({
-      title: "Gespeichert",
-      description: `Begrüßung für ${newUsername} wurde gespeichert.`,
-    });
+    if (!newGreeting.trim()) {
+      toast({
+        title: "Fehler",
+        description: "Bitte gib eine Begrüßungsnachricht ein.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await setGreetingForUser(newUsername.trim(), newGreeting.trim());
+      const savedUsername = newUsername.trim();
+      setNewUsername("");
+      setNewGreeting("");
+      await loadData();
+      
+      toast({
+        title: "Gespeichert",
+        description: `Begrüßung für "${savedUsername}" wurde gespeichert.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Fehler",
+        description: "Begrüßung konnte nicht gespeichert werden.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditGreeting = (username: string) => {
@@ -257,7 +275,7 @@ export default function AdminPanel() {
           <CardHeader>
             <CardTitle className="text-base sm:text-lg">Neue Begrüßung hinzufügen</CardTitle>
             <CardDescription className="text-xs sm:text-sm">
-              Personalisierte Begrüßungsnachricht für einen Benutzer festlegen
+              Personalisierte Begrüßungsnachricht für einen beliebigen Benutzer festlegen (auch unbekannte)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -266,10 +284,13 @@ export default function AdminPanel() {
                 <Label htmlFor="newUsername">Benutzername</Label>
                 <Input
                   id="newUsername"
-                  placeholder="z.B. max123"
+                  placeholder="Beliebigen Benutzernamen eingeben"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Auch für noch nicht registrierte Benutzer möglich
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newGreeting">Begrüßungstext</Label>

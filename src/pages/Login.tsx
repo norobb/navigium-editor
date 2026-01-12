@@ -26,9 +26,9 @@ export default function Login() {
       const response = await login(user, password, lang);
       
       // Add user to known users
-      addKnownUser(response.username);
+      await addKnownUser(response.username);
       
-      saveSession({
+      await saveSession({
         username: response.username,
         password, // Store password for session refresh
         lang,
@@ -37,7 +37,7 @@ export default function Login() {
       });
 
       // Check for personalized greeting
-      const personalGreeting = getGreetingForUser(response.username);
+      const personalGreeting = await getGreetingForUser(response.username);
       
       toast({
         title: "Erfolgreich eingeloggt!",
