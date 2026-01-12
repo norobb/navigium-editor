@@ -14,11 +14,9 @@ import {
   clearAppAuth,
   getAppPassword,
   setAppPassword,
-  syncGreetingToServer,
-  syncAppPasswordToServer,
   UserGreeting,
 } from "@/lib/navigium-api";
-import { ArrowLeft, Users, MessageSquare, Trash2, Save, Shield, LogOut, Key, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Trash2, Save, Shield, LogOut, Key, Eye, EyeOff, RefreshCw } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -33,6 +31,7 @@ export default function AdminPanel() {
   const [currentAppPassword, setCurrentAppPassword] = useState("");
   const [newAppPassword, setNewAppPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -56,9 +55,26 @@ export default function AdminPanel() {
   }, [navigate, toast]);
 
   const loadData = async () => {
-    setUsers(getKnownUsers());
-    setGreetings(await getGreetings());
-    setCurrentAppPassword(await getAppPassword());
+    setIsLoading(true);
+    try {
+      const [usersData, greetingsData, passwordData] = await Promise.all([
+        getKnownUsers(),
+        getGreetings(),
+        getAppPassword(),
+      ]);
+      setUsers(usersData);
+      setGreetings(greetingsData);
+      setCurrentAppPassword(passwordData);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+      toast({
+        title: "Fehler",
+        description: "Daten konnten nicht geladen werden.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleAddGreeting = async () => {
@@ -71,22 +87,16 @@ export default function AdminPanel() {
       return;
     }
 
-    setGreetingForUser(newUsername.trim(), newGreeting.trim());
-    // Sync to server in background
-    const result = syncGreetingToServer(newUsername.trim(), newGreeting.trim());
-    if (result instanceof Promise) {
-      result.catch(error => {
-        console.error('Failed to sync greeting to server:', error);
-      });
-    }
+    await setGreetingForUser(newUsername.trim(), newGreeting.trim());
     
+    const savedUsername = newUsername;
     setNewUsername("");
     setNewGreeting("");
     await loadData();
     
     toast({
       title: "Gespeichert",
-      description: `Begrüßung für ${newUsername} wurde gespeichert.`,
+      description: `Begrüßung für ${savedUsername} wurde gespeichert.`,
     });
   };
 
@@ -99,14 +109,7 @@ export default function AdminPanel() {
   const handleSaveEdit = async () => {
     if (!editingUser) return;
     
-    setGreetingForUser(editingUser, editGreeting);
-    // Sync to server in background (optional, as it might be void)
-    const result = syncGreetingToServer(editingUser, editGreeting);
-    if (result instanceof Promise) {
-      result.catch(error => {
-        console.error('Failed to sync greeting to server:', error);
-      });
-    }
+    await setGreetingForUser(editingUser, editGreeting);
     
     setEditingUser(null);
     setEditGreeting("");
@@ -119,15 +122,7 @@ export default function AdminPanel() {
   };
 
   const handleDeleteGreeting = async (username: string) => {
-    setGreetingForUser(username, "");
-    // Sync to server in background (optional, as it might be void)
-    const result = syncGreetingToServer(username, "");
-    if (result instanceof Promise) {
-      result.catch(error => {
-        console.error('Failed to sync greeting to server:', error);
-      });
-    }
-    
+    await setGreetingForUser(username, "");
     await loadData();
     
     toast({
@@ -163,22 +158,14 @@ export default function AdminPanel() {
       return;
     }
 
-    setAppPassword(newAppPassword);
-    // Sync to server in background
-    const result = syncAppPasswordToServer(newAppPassword);
-    if (result instanceof Promise) {
-      result.catch(error => {
-        console.error('Failed to sync password to server:', error);
-      });
-    }
-    
+    await setAppPassword(newAppPassword);
     clearAppAuth(); // Force re-authentication with new password
     setCurrentAppPassword(newAppPassword);
     setNewAppPassword("");
     
     toast({
       title: "Passwort geändert",
-      description: "Das App-Passwort wurde erfolgreich geändert.",
+      description: "Das App-Passwort wurde erfolgreich in der Datenbank gespeichert.",
     });
   };
 
@@ -196,10 +183,14 @@ export default function AdminPanel() {
                 <Shield className="h-5 w-5 text-primary" />
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground">Admin Panel</h1>
               </div>
-              <p className="text-sm text-muted-foreground">Benutzer und Einstellungen verwalten</p>
+              <p className="text-sm text-muted-foreground">Benutzer und Einstellungen verwalten (Datenbank)</p>
             </div>
           </div>
           <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={loadData} disabled={isLoading}>
+              <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              Aktualisieren
+            </Button>
             <ThemeToggle />
           </div>
         </div>

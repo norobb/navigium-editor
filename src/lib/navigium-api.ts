@@ -35,7 +35,7 @@ export interface UserGreeting {
 export interface LogEntry {
   id: string;
   timestamp: Date;
-  type: 'login' | 'setpoints' | 'points' | 'password' | 'getpassword' | 'greeting' | 'greetings';
+  type: 'login' | 'setpoints' | 'points' | 'db_read' | 'db_write';
   request: {
     url: string;
     headers: Record<string, string>;
@@ -126,6 +126,15 @@ async function makeRequest(
   }
 }
 
+function logDbOperation(operation: string, table: string, data: unknown, error?: string) {
+  addLog({
+    type: error ? 'db_write' : 'db_read',
+    request: { url: `supabase://${table}/${operation}`, headers: {} },
+    response: error ? null : { status: 200, data },
+    error: error || null,
+  });
+}
+
 export async function login(
   user: string,
   password: string,
@@ -133,6 +142,9 @@ export async function login(
 ): Promise<LoginResponse> {
   const { data } = await makeRequest('login', { user, password, lang }, 'login');
   const response = data as Record<string, unknown>;
+
+  // Add known user to database
+  await addKnownUser(user);
 
   return {
     username: (response?.username as string) || user,
@@ -218,37 +230,48 @@ export async function refreshLogin(): Promise<LoginResponse | null> {
   }
 }
 
-// App Password Functions with server sync
+// ===============================
+// App Password Functions (Database)
+// ===============================
+
 export async function getAppPassword(): Promise<string> {
   try {
-    // First try to get from server
-    const serverPassword = await getAppPasswordFromServer();
-    if (serverPassword && serverPassword !== DEFAULT_APP_PASSWORD) {
-      // Update local storage with server password
-      setAppPassword(serverPassword);
-      return serverPassword;
+    const { data, error } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'app_password')
+      .single();
+    
+    logDbOperation('select', 'app_settings', data, error?.message);
+    
+    if (error || !data) {
+      return DEFAULT_APP_PASSWORD;
     }
+    
+    return data.value || DEFAULT_APP_PASSWORD;
   } catch (error) {
-    console.error('Failed to get password from server, using local:', error);
+    console.error('Failed to get app password:', error);
+    return DEFAULT_APP_PASSWORD;
   }
-  
-  // Fallback to local storage
-  const encrypted = localStorage.getItem("app_password_v2");
-  if (encrypted) {
-    const decrypted = decrypt(encrypted);
-    return decrypted || DEFAULT_APP_PASSWORD;
-  }
-  return DEFAULT_APP_PASSWORD;
 }
 
-export function setAppPassword(password: string): void {
-  const encrypted = encrypt(password);
-  localStorage.setItem("app_password_v2", encrypted);
+export async function setAppPassword(password: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('app_settings')
+      .upsert({ key: 'app_password', value: password }, { onConflict: 'key' });
+    
+    logDbOperation('upsert', 'app_settings', { key: 'app_password' }, error?.message);
+    
+    if (error) {
+      console.error('Failed to set app password:', error);
+    }
+  } catch (error) {
+    console.error('Failed to set app password:', error);
+  }
 }
 
 export async function checkAppPassword(): Promise<boolean> {
-  // Ensure we have the latest password from server
-  await getAppPassword();
   return localStorage.getItem("app_authenticated") === "true";
 }
 
@@ -265,149 +288,121 @@ export function clearAppAuth(): void {
   localStorage.removeItem("app_authenticated");
 }
 
-// Server-side app password functions
-export async function syncAppPasswordToServer(password: string): Promise<void> {
-  const { data } = await makeRequest('password', { password }, 'password');
-  // Response is just success confirmation
-}
-
-export async function getAppPasswordFromServer(): Promise<string> {
-  try {
-    const { data } = await makeRequest('getpassword', {}, 'getpassword');
-    const response = data as Record<string, unknown>;
-    return (response?.password as string) || DEFAULT_APP_PASSWORD;
-  } catch (error) {
-    console.error('Failed to get password from server:', error);
-    return DEFAULT_APP_PASSWORD;
-  }
-}
-
+// ===============================
 // Admin Check
+// ===============================
+
 export function isAdmin(): boolean {
   const session = getSession();
   return session?.username === "mahyno2022";
 }
 
-// User Greetings Management with server sync
+// ===============================
+// User Greetings Management (Database)
+// ===============================
+
 export async function getGreetings(): Promise<UserGreeting[]> {
   try {
-    // First try to get from server
-    const serverGreetings = await getGreetingsFromServer();
-    if (serverGreetings.length > 0) {
-      // Update local storage with server greetings
-      saveGreetings(serverGreetings);
-      return serverGreetings;
-    }
-  } catch (error) {
-    console.error('Failed to get greetings from server, using local:', error);
-  }
-  
-  // Fallback to local storage
-  return getLocalGreetings();
-}
-
-export function getLocalGreetings(): UserGreeting[] {
-  const encrypted = localStorage.getItem("user_greetings_v2");
-  if (encrypted) {
-    return decryptObject<UserGreeting[]>(encrypted) || [];
-  }
-  // Migrate from old unencrypted greetings
-  const oldGreetings = localStorage.getItem("user_greetings");
-  if (oldGreetings) {
-    try {
-      const greetings = JSON.parse(oldGreetings) as UserGreeting[];
-      saveGreetings(greetings);
-      localStorage.removeItem("user_greetings");
-      return greetings;
-    } catch {
+    const { data, error } = await supabase
+      .from('user_greetings')
+      .select('username, greeting')
+      .order('username');
+    
+    logDbOperation('select', 'user_greetings', data, error?.message);
+    
+    if (error || !data) {
       return [];
     }
-  }
-  return [];
-}
-
-export function saveGreetings(greetings: UserGreeting[]): void {
-  const encrypted = encryptObject(greetings);
-  localStorage.setItem("user_greetings_v2", encrypted);
-}
-
-export async function getGreetingForUser(username: string): Promise<string | null> {
-  const greetings = await getGreetings();
-  const greeting = greetings.find(g => g.username.toLowerCase() === username.toLowerCase());
-  return greeting?.greeting || null;
-}
-
-export async function setGreetingForUser(username: string, greeting: string): Promise<void> {
-  const greetings = await getGreetings();
-  const existing = greetings.findIndex(g => g.username.toLowerCase() === username.toLowerCase());
-  
-  if (greeting.trim() === "") {
-    if (existing !== -1) {
-      greetings.splice(existing, 1);
-    }
-  } else if (existing !== -1) {
-    greetings[existing] = { username, greeting };
-  } else {
-    greetings.push({ username, greeting });
-  }
-  
-  saveGreetings(greetings);
-}
-
-// Server-side greeting functions
-export async function syncGreetingToServer(username: string, greeting: string): Promise<void> {
-  await makeRequest('greeting', { user: username, greeting }, 'greeting');
-}
-
-export async function getGreetingsFromServer(): Promise<UserGreeting[]> {
-  try {
-    const { data } = await makeRequest('greetings', {}, 'greetings');
-    const rows = data as Array<Record<string, unknown>>;
     
-    // Filter out entries that have greetings and map to UserGreeting format
-    return rows
-      .filter(row => row.greeting && typeof row.greeting === 'string' && row.greeting.trim() !== '')
-      .map(row => ({
-        username: String(row.user || ''),
-        greeting: String(row.greeting || '')
-      }))
-      .filter(g => g.username && g.greeting); // Ensure both fields are present
+    return data.map(row => ({
+      username: row.username,
+      greeting: row.greeting,
+    }));
   } catch (error) {
-    console.error('Failed to get greetings from server:', error);
+    console.error('Failed to get greetings:', error);
     return [];
   }
 }
 
-// Known Users Management with localStorage
-export function getKnownUsers(): string[] {
-  const encrypted = localStorage.getItem("known_users_v2");
-  if (encrypted) {
-    return decryptObject<string[]>(encrypted) || [];
+export async function getGreetingForUser(username: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabase
+      .from('user_greetings')
+      .select('greeting')
+      .ilike('username', username)
+      .single();
+    
+    logDbOperation('select', 'user_greetings', data, error?.message);
+    
+    if (error || !data) {
+      return null;
+    }
+    
+    return data.greeting;
+  } catch (error) {
+    console.error('Failed to get greeting for user:', error);
+    return null;
   }
-  // Migrate from old unencrypted users
-  const oldUsers = localStorage.getItem("known_users");
-  if (oldUsers) {
-    try {
-      const users = JSON.parse(oldUsers) as string[];
-      saveKnownUsers(users);
-      localStorage.removeItem("known_users");
-      return users;
-    } catch {
+}
+
+export async function setGreetingForUser(username: string, greeting: string): Promise<void> {
+  try {
+    if (greeting.trim() === "") {
+      // Delete greeting
+      const { error } = await supabase
+        .from('user_greetings')
+        .delete()
+        .ilike('username', username);
+      
+      logDbOperation('delete', 'user_greetings', { username }, error?.message);
+    } else {
+      // Upsert greeting
+      const { error } = await supabase
+        .from('user_greetings')
+        .upsert({ username, greeting }, { onConflict: 'username' });
+      
+      logDbOperation('upsert', 'user_greetings', { username, greeting }, error?.message);
+    }
+  } catch (error) {
+    console.error('Failed to set greeting for user:', error);
+  }
+}
+
+// ===============================
+// Known Users Management (Database)
+// ===============================
+
+export async function getKnownUsers(): Promise<string[]> {
+  try {
+    const { data, error } = await supabase
+      .from('known_users')
+      .select('username')
+      .order('last_login', { ascending: false });
+    
+    logDbOperation('select', 'known_users', data, error?.message);
+    
+    if (error || !data) {
       return [];
     }
+    
+    return data.map(row => row.username);
+  } catch (error) {
+    console.error('Failed to get known users:', error);
+    return [];
   }
-  return [];
 }
 
-export function saveKnownUsers(users: string[]): void {
-  const encrypted = encryptObject(users);
-  localStorage.setItem("known_users_v2", encrypted);
-}
-
-export function addKnownUser(username: string): void {
-  const users = getKnownUsers();
-  if (!users.includes(username)) {
-    users.push(username);
-    saveKnownUsers(users);
+export async function addKnownUser(username: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('known_users')
+      .upsert(
+        { username, last_login: new Date().toISOString() },
+        { onConflict: 'username' }
+      );
+    
+    logDbOperation('upsert', 'known_users', { username }, error?.message);
+  } catch (error) {
+    console.error('Failed to add known user:', error);
   }
 }
