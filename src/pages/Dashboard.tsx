@@ -20,12 +20,11 @@ export default function Dashboard() {
   const [logRefreshTrigger, setLogRefreshTrigger] = useState(0);
   const [showLog, setShowLog] = useState(false);
   const [personalGreeting, setPersonalGreeting] = useState<string | null>(null);
-  const [isAdminUser, setIsAdminUser] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const refreshSession = useCallback(async () => {
-    const currentSession = getSession();
+    const currentSession = await getSession();
     if (!currentSession) {
       navigate("/");
       return;
@@ -49,22 +48,22 @@ export default function Dashboard() {
   }, [navigate]);
 
   useEffect(() => {
-    const initializeSession = async () => {
-      const currentSession = getSession();
+    const initSession = async () => {
+      const currentSession = await getSession();
       if (!currentSession) {
         navigate("/");
         return;
       }
       setSession(currentSession);
       setTargetPoints(currentSession.gesamtpunkteKarteikasten.toString());
-      setPersonalGreeting(await getGreetingForUser(currentSession.username));
-      setIsAdminUser(isAdmin());
-
-      // Initial refresh login
-      refreshSession();
+      const greeting = await getGreetingForUser(currentSession.username);
+      setPersonalGreeting(greeting);
     };
 
-    initializeSession();
+    initSession();
+
+    // Initial refresh login
+    refreshSession();
 
     // Set up periodic login refresh
     const intervalId = setInterval(refreshSession, LOGIN_REFRESH_INTERVAL);
@@ -222,7 +221,7 @@ export default function Dashboard() {
             <Button variant="outline" size="sm" onClick={() => setShowLog(!showLog)}>
               <FileText className="h-4 w-4" />
             </Button>
-            {isAdminUser && (
+            {isAdmin() && (
               <Button variant="outline" size="sm" onClick={() => navigate("/admin")}>
                 <Shield className="h-4 w-4" />
               </Button>
