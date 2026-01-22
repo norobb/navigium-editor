@@ -4,11 +4,17 @@ Eine moderne React-Webanwendung zur Verwaltung von Lernpunkten in der Navigium L
 
 ## 🚀 Features
 
+- **Multi-Layer Authentifizierung**: App-Passwort-Gate + Sitzungsbasierte Authentifizierung
 - **Benutzerverwaltung**: Sichere Anmeldung mit Navigium-Zugangsdaten
 - **Punkteverwaltung**: Anzeige und Bearbeitung von Lernpunkten
+- **Admin-Panel**: Verwaltung von Benutzern, Greetings und App-Passwort (für mahyno2022)
+- **Persönliche Greetings**: Benutzerdefinierte Begrüßungsnachrichten pro Benutzer
+- **Verschlüsselte Speicherung**: AES-256 Verschlüsselung für sensitive Daten
+- **Server-Synchronisation**: Automatische Synchronisation mit n8n mit lokaler Fallback
 - **Automatische Sitzungsverlängerung**: Automatische Anmeldung alle 5 Minuten
-- **API-Logging**: Detaillierte Protokollierung aller API-Anfragen und -Antworten
+- **API-Logging**: Detaillierte Protokollierung aller API-Anfragen und -Antworten (in-memory)
 - **Responsive Design**: Optimierte Darstellung auf Desktop und Mobilgeräten
+- **Dark Mode**: Unterstützung für Dark Mode via Theme Toggle
 - **Deutsche Benutzeroberfläche**: Intuitive Navigation in deutscher Sprache
 
 ## 🛠 Technologie-Stack
@@ -21,7 +27,8 @@ Eine moderne React-Webanwendung zur Verwaltung von Lernpunkten in der Navigium L
 - **shadcn/ui** - Hochwertige UI-Komponenten
 - **React Router** - Clientseitiges Routing
 - **React Query** - Serverzustandsverwaltung
-- **React Hook Form** - Formularverwaltung
+- **TweetNaCl.js** - AES-256 Verschlüsselung für sensitive Daten
+- **Lucide React** - Icon-Bibliothek
 
 ### Backend-Integration
 - **n8n Webhook API** - Externe API für Datenoperationen
@@ -162,44 +169,74 @@ npm run preview
    ```
 
 ## 📖 Verwendung
+pp-Passwort-Gate
+1. Öffne die Anwendung
+2. Gib das App-Passwort ein (Standard: `cheater2025`)
+3. Klicke auf "Entsperren"
 
 ### Anmeldung
-1. Öffne die Anwendung
-2. Gib deinen Navigium-Benutzernamen und Passwort ein
-3. Wähle die Sprache (Latein/Griechisch/Englisch)
-4. Klicke auf "Anmelden"
+1. Gib deinen Navigium-Benutzernamen und Passwort ein
+2. Wähle die Sprache (Latein/Griechisch/Englisch)
+3. Klicke auf "Anmelden"
+4. Du siehst optional deine persönliche Begrüßung (falls vom Admin gesetzt)
 
-### Punkteverwaltung
+### Punkteverwaltung (Dashboard)
 - **Aktueller Punktestand**: Wird automatisch angezeigt
+- **Persönliche Begrüßung**: Zeigt deine vom Admin gesetzte Nachricht
 - **Punkte ändern**: Verwende die Schnellbuttons (+1, -1, +10, -10) oder gib einen Zielwert ein
 - **Punkte aktualisieren**: Klicke auf "Aktualisieren" oder verwende die Schnellbuttons
+- **Admin-Badge**: Sichtbar wenn du Administrator (mahyno2022) bist
+
+### Admin-Panel (für mahyno2022)
+1. Klicke auf das Schild-Icon im Dashboard
+2. Du kannst folgende Aufgaben durchführen:
+   - **Bekannte Benutzer verwalten**: Benutzer hinzufügen/löschen
+   - **Greetings verwalten**: Persönliche Begrüßungen für jeden Benutzer setzen/löschen
+   - **App-Passwort ändern**: Neues Passwort setzen und mit Server synchronisieren
+3. Alle Änderungen werden lokal und auf dem Server gespeichert
 
 ### API-Logs
 - Klappe den "API-Anfragen"-Bereich auf, um alle API-Aufrufe zu sehen
+- Logs enthalten Request-Details, Response-Status, Fehler und Zeitstempel
+- Max. 100 Log-Einträge werden im Speicher gespeichert zu sehen
 - Logs enthalten Request-Details, Response-Status und Fehler
 - Logs werden automatisch alle 5 Minuten mit der Sitzungsverlängerung aktualisiert
 
 ## 🔌 API-Integration
 
-### n8n Webhook-Endpunkte
-Die Anwendung kommuniziert mit folgenden n8n-Webhook-Endpunkten:
+### n8n Webhook Base URL
+```
+https://n8n.nemserver.duckdns.org/webhook/navigium
+```
 
-- **Login**: `POST /webhook/navigium/login`
-  - Parameter: `user`, `password`, `lang`
-  - Response: Benutzerdaten und aktueller Punktestand
+### Unterstützte Endpunkte (GET-Anfragen)
+Alle Anfragen verwenden den Header: `x-internal-key: BANANA`
 
-- **Punkte setzen**: `GET /webhook/navigium/setpoints`
-  - Parameter: `name`, `diff`, `lang`
-  - Response: Aktualisierte Punktestand-Informationen
+| Endpunkt | Parameter | Response | Beschreibung |
+|----------|-----------|----------|---------------|
+| `login` | `user`, `password`, `lang` | `{ username, aktuellerKarteikasten, gesamtpunkteKarteikasten }` | Benutzer-Authentifizierung |
+| `points` | `name`, `lang` | `{ aktuellerKarteikasten, gesamtpunkteKarteikasten }` | Aktuellen Punktestand abrufen |
+| `setpoints` | `name`, `diff`, `lang` | `{ aktuellerKarteikasten, gesamtpunkteKarteikasten }` | Punkte hinzufügen/subtrahieren |
+| `password` | `password` | `{ status: "success" }` | App-Passwort auf Server setzen |
+| `getpassword` | (keine) | `{ password: string }` | App-Passwort vom Server abrufen |
+| `greeting` | `user`, `greeting` | `{ status: "success" }` | Begrüßung für Benutzer setzen |
+| `greetings` | (keine) | `[ { user, greeting }, ... ]` | Alle Begrüßungen abrufen |
 
-- **Punkte abrufen**: `GET /webhook/navigium/getpoints`
-  - Parameter: `name`, `lang`
-  - Response: Aktuelle Punktestand-Informationen
+### Verschlüsselung & Speicherung
+- **Sensitive Daten**: AES-256 Verschlüsselung mit TweetNaCl.js
+- **localStorage Keys**:
+  - `navigium_session_v2` - Verschlüsselte Benutzersitzung
+  - `app_password_v2` - Verschlüsseltes App-Passwort
+  - `user_greetings_v2` - Verschlüsselte Begrüßungen
+  - `known_users_v2` - Verschlüsselte Benutzerliste
+  - `app_authenticated` - Authentifizierungsflag
+- **Auto-Migration**: Alte unverschlüsselte localStorage-Einträge werden automatisch migriert
+- **Server-Fallback**: Falls Server nicht erreichbar, werden lokale Werte verwendet
 
-### Authentifizierung
-- Alle API-Aufrufe verwenden den Header: `x-internal-key: BANANA`
-- Sitzungen werden im localStorage gespeichert
-- Automatische Sitzungsverlängerung alle 5 Minuten
+### Sitzungsverwaltung
+- Automatische Sitzungsverlängerung: Alle 5 Minuten
+- Benutzername und Passwort werden lokal für Auto-Refresh gespeichert
+- Sitzungen persisten über Browser-Neuladen
 
 ## 🧪 Entwicklung
 
@@ -215,20 +252,33 @@ npx tsc --noEmit
 ### Projektstruktur
 ```
 src/
-├── components/          # Wiederverwendbare UI-Komponenten
-│   ├── ui/             # shadcn/ui Komponenten
-│   └── RequestLog.tsx  # API-Logging-Komponente
-├── pages/              # Seitenkomponenten
-│   ├── Login.tsx       # Anmeldeseite
-│   ├── Dashboard.tsx   # Haupt-Dashboard
-│   └── NotFound.tsx    # 404-Seite
-├── lib/                # Hilfsfunktionen und API
-│   ├── navigium-api.ts # API-Integration
-│   └── utils.ts        # Utility-Funktionen
-├── hooks/              # Custom React Hooks
-├── integrations/       # Externe Integrationen
-│   └── supabase/       # Supabase-Client
-└── App.tsx            # Hauptkomponente
+├── components/                # Wiederverwendbare UI-Komponenten
+│   ├── ui/                   # shadcn/ui Komponenten
+│   ├── AppPasswordGate.tsx   # App-Level Authentifizierung
+│   ├── RequestLog.tsx        # API-Logging-Komponente
+│   ├── ThemeToggle.tsx       # Dark Mode Toggle
+│   └── NavLink.tsx           # Navigation Link Komponente
+├── pages/                     # Seitenkomponenten
+│   ├── Login.tsx             # Anmeldeseite
+│   ├── Dashboard.tsx         # Haupt-Dashboard mit Punkteverwaltung
+│   ├── AdminPanel.tsx        # Admin-Panel (nur für mahyno2022)
+│   ├── Index.tsx             # Home-Weiterleitung
+│   └── NotFound.tsx          # 404-Seite
+├── lib/                       # Hilfsfunktionen und API
+│   ├── navigium-api.ts       # API-Integration, Session, Auth, Greetings
+│   ├── crypto.ts             # AES-256 Verschlüsselung
+│   └── utils.ts              # Utility-Funktionen
+├── hooks/                     # Custom React Hooks
+│   ├── use-theme.tsx         # Theme Provider für Dark Mode
+│   ├── use-toast.ts          # Toast Notifications
+│   └── use-mobile.tsx        # Mob + Dark Mode Support
+- **State Management**: React Query für Server-Zustand, localStorage für Persistierung
+- **Error Handling**: Toast-Benachrichtigungen für Fehler mit Fallback auf localStorage
+- **Logging**: Alle API-Aufrufe werden automatisch geloggt (in-memory, max. 100 Einträge)
+- **Verschlüsselung**: AES-256 für alle sensitive Daten in localStorage
+- **Authentication**: Multi-Layer (App-Passwort-Gate → Sitzungsbasierte Auth)
+- **Admin**: Hardcoded Benutzer `mahyno2022` hat Zugriff auf Admin-Panel
+- **Default App-Passwort**: `cheater2025` (kann im Admin-Panel geändert werden)r
 ```
 
 ### Wichtige Konventionen
