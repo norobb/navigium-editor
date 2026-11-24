@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <title>Navigium Punkte-Editor</title>
+    <script>
+      // Single Page App redirect for GitHub Pages
+      // Redirects 404s to the main page preserving path in the hash
+      var pathSegmentsToKeep = 1; // 1 for repo name on username.github.io/repo/
+      var l = window.location;
+      var repoPath = l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/');
+      var redirectUrl = l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        repoPath + '/#' + l.pathname.slice(repoPath.length) +
+        (l.search ? '?' + l.search.slice(1) : '') +
+        l.hash;
+      l.replace(redirectUrl);
+    </script>
+  </head>
+  <body>
+    <p>Weiterleitung...</p>
+  </body>
+</html>
