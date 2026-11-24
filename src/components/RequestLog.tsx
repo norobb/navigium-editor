@@ -48,6 +48,12 @@ export default function RequestLog({ refreshTrigger }: RequestLogProps) {
         return 'secondary';
       case 'points':
         return 'outline';
+      case 'welcome':
+        return 'outline';
+      case 'training':
+        return 'secondary';
+      case 'vocable':
+        return 'outline';
       default:
         return 'default';
     }

@@ -70,19 +70,19 @@ export default function AppPasswordGate({ children }: AppPasswordGateProps) {
         <ThemeToggle />
       </div>
       
-      <Card className="w-full max-w-sm relative">
+      <Card className="w-full max-w-sm relative shadow-xl backdrop-blur-xl bg-card/90 border-border/50">
         <CardHeader className="text-center space-y-3 pb-4">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl flex items-center justify-center mb-2 backdrop-blur-sm border border-border/30">
-            <Lock className="h-7 w-7 text-primary" />
+          <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-1 drop-shadow-md">
+            <img src="./logo.svg" alt="Navigium Logo" className="w-16 h-16 object-contain" />
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary/60" />
-              <CardTitle className="text-xl font-bold">Geschützter Bereich</CardTitle>
-              <Sparkles className="h-4 w-4 text-primary/60" />
+              <Sparkles className="h-4 w-4 text-primary/70" />
+              <CardTitle className="text-xl font-bold tracking-tight">Geschützter Bereich</CardTitle>
+              <Sparkles className="h-4 w-4 text-primary/70" />
             </div>
             <CardDescription className="text-sm">
-              Bitte gib das App-Passwort ein
+              Navigium Punkte-Editor • Passwort erforderlich
             </CardDescription>
           </div>
         </CardHeader>

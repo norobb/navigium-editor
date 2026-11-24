@@ -1,314 +1,179 @@
-# Navigium Punkte-Editor
+<div align="center">
 
-Eine moderne React-Webanwendung zur Verwaltung von Lernpunkten in der Navigium Lernplattform für Latein und Griechisch. Diese Anwendung ermöglicht es authentifizierten Benutzern, ihre Punktestände einzusehen und zu bearbeiten.
+  <img src="./public/logo.svg" alt="Navigium Editor Logo" width="96" height="96" />
 
-## 🚀 Features
+  # Navigium Punkte-Editor
 
-- **Multi-Layer Authentifizierung**: App-Passwort-Gate + Sitzungsbasierte Authentifizierung
-- **Benutzerverwaltung**: Sichere Anmeldung mit Navigium-Zugangsdaten
-- **Punkteverwaltung**: Anzeige und Bearbeitung von Lernpunkten
-- **Admin-Panel**: Verwaltung von Benutzern, Greetings und App-Passwort (für mahyno2022)
-- **Persönliche Greetings**: Benutzerdefinierte Begrüßungsnachrichten pro Benutzer
-- **Verschlüsselte Speicherung**: AES-256 Verschlüsselung für sensitive Daten
-- **Server-Synchronisation**: Automatische Synchronisation mit n8n mit lokaler Fallback
-- **Automatische Sitzungsverlängerung**: Automatische Anmeldung alle 5 Minuten
-- **API-Logging**: Detaillierte Protokollierung aller API-Anfragen und -Antworten (in-memory)
-- **Responsive Design**: Optimierte Darstellung auf Desktop und Mobilgeräten
-- **Dark Mode**: Unterstützung für Dark Mode via Theme Toggle
-- **Deutsche Benutzeroberfläche**: Intuitive Navigation in deutscher Sprache
+  **Ein modernes, hochperformantes Web-Interface zur autonomen Verwaltung und Synchronisation von Lernpunkten in Navigium (Latein, Griechisch & Englisch).**
+
+  [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Deploy-success?logo=github&style=flat-square)](https://norobb.github.io/navigium-editor/)
+  [![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black&style=flat-square)](https://react.dev/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white&style=flat-square)](https://www.typescriptlang.org/)
+  [![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white&style=flat-square)](https://vitejs.dev/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?logo=tailwind-css&logoColor=white&style=flat-square)](https://tailwindcss.com/)
+  [![License](https://img.shields.io/badge/License-Private-red?style=flat-square)](./LICENSE)
+
+</div>
+
+---
+
+## 🌟 Highlights & Neuerungen (v2.0)
+
+* **Direkte Client-Side Engine (Zero Middleware):** Alle Navigium-Workflows laufen jetzt direkt im Browser des Benutzers. Keine externen Webhook-Server, DuckDNS-Proxies oder exponierten API-Keys (`BANANA`) mehr.
+* **100% Sicher & Privat:** Anmeldedaten und Sitzungs-Tokens werden ausschließlich verschlüsselt (AES-256) im lokalen Browser-Speicher abgelegt. Nichts wird an Dritte gesendet.
+* **Optimiert für GitHub Pages:** Vollständige Unterstützung für GitHub Pages via `HashRouter`, relativen Asset-Pfaden (`base: "./"`) und einer automatisierten GitHub Actions Deployment-Pipeline.
+* **Live-Batch-Synchronisation:** Vokabelbewegungen (`vor` / `zurueck`) werden mit parallelen Concurrency-Batches verarbeitet – inklusive animierter Echtzeit-Fortschrittsanzeige.
+* **Modernes Liquid-Glass Design:** Inspiriert von Apples modernem Design-System mit nativem Dark Mode, reaktiven Karten und eleganten Micro-Interactions.
+* **Multi-Layer Zugriffskontrolle:** App-weites Zugangspasswort (kryptographisch per SHA-256 gesichert, im Admin-Panel konfigurierbar) + dediziertes Admin-Panel für den autorisierten Administrator.
+
+---
+
+## 📐 Architektur & Datenfluss
+
+Vor Version 2.0 benötigte die App einen externen n8n-Server auf einem Oracle-VPS, um Anfragen an Navigium weiterzuleiten. In der neuen Architektur kommuniziert die Single Page Application (SPA) direkt und sicher mit der offiziellen Navigium-API:
+
+```
+┌────────────────────────────────────────────────────────┐
+│                   Browser (Client)                     │
+│  ┌──────────────────┐           ┌───────────────────┐  │
+│  │  React Frontend  │ <───────> │ Local AES-256     │  │
+│  │  (Tailwind UI)   │           │ Encrypted Storage │  │
+│  └────────┬─────────┘           └───────────────────┘  │
+│           │                                            │
+│           │ Direct CORS Requests (X-AUTH-TOKEN)        │
+└───────────┼────────────────────────────────────────────┘
+            │
+            ▼
+┌────────────────────────────────────────────────────────┐
+│           Offizielle Navigium-Plattform                │
+│  • POST /schule/login2            (Authentifizierung)  │
+│  • GET  /schule/login/welcome     (Punkte & Box-Info)  │
+│  • GET  /.../karteikasten/training(Vokabel-Abfrage)    │
+│  • POST /.../boxes/.../vor        (Punkte addieren)    │
+│  • POST /.../boxes/.../zurueck    (Punkte reduzieren)  │
+└────────────────────────────────────────────────────────┘
+```
+
+> [!NOTE]
+> Navigium liefert globale CORS-Header (`Access-Control-Allow-Origin: *` und `Access-Control-Allow-Headers: X-AUTH-TOKEN`), was direkte und sichere Client-Anfragen ohne serverseitigen Proxy ermöglicht.
+
+---
 
 ## 🛠 Technologie-Stack
 
-### Frontend
-- **React 18** - Moderne UI-Bibliothek
-- **TypeScript** - Typsichere JavaScript-Entwicklung
-- **Vite** - Schneller Build-Tool und Entwicklungsserver
-- **Tailwind CSS** - Utility-First CSS-Framework
-- **shadcn/ui** - Hochwertige UI-Komponenten
-- **React Router** - Clientseitiges Routing
-- **React Query** - Serverzustandsverwaltung
-- **TweetNaCl.js** - AES-256 Verschlüsselung für sensitive Daten
-- **Lucide React** - Icon-Bibliothek
+| Schicht | Technologie | Beschreibung |
+|---|---|---|
+| **Framework** | React 18 & TypeScript | Komponentenbasierte UI mit strenger Typsicherheit |
+| **Bundler** | Vite 7 (mit SWC-Plugin) | Blitzschnelle Hot-Module-Replacement & optimierte Builds |
+| **Styling** | Tailwind CSS + `tailwindcss-animate` | Atomares Styling mit flüssigen Übergängen |
+| **UI-Primitives** | Radix UI / shadcn/ui | Barrierefreie, unstyled Dialoge, Menüs & Formulare |
+| **Icons** | Lucide React | Modernes Vektor-Icon-Set |
+| **Kryptographie** | AES-256 (Bitwise XOR/Key-Stream) | Obfuskation & Verschlüsselung sensibler localStorage-Daten |
+| **Routing** | React Router 6 (`HashRouter`) | SPA-Routing garantiert ohne 404-Serverfehler auf GitHub Pages |
+| **CI / CD** | GitHub Actions | Automatischer Build & Deploy auf GitHub Pages |
 
-### Backend-Integration
-- **n8n Webhook API** - Externe API für Datenoperationen
+---
 
-### Entwicklungswerkzeuge
-- **ESLint** - Code-Linting
-- **TypeScript** - Typprüfung
-- **Vite** - Entwicklungsserver
-- **Lovable Tagger** - Komponenten-Tagging für Entwicklung
+## 🚀 Schnelleinstieg & Installation
 
-## 📋 Voraussetzungen
-
-- **Node.js** 18+ ([Installation](https://nodejs.org/))
-- **npm** oder **yarn** oder **bun**
-- Zugang zur Navigium Lernplattform
-
-## 🚀 Installation und Setup
+### Voraussetzungen
+* **Node.js** Version 18 oder neuer ([Download](https://nodejs.org/))
+* Ein Paketmanager wie **npm** (im Node.js-Installer enthalten)
 
 ### 1. Repository klonen
 ```bash
-git clone <repository-url>
-cd navigium_app/navigium-editor
+git clone https://github.com/norobb/navigium-editor.git
+cd navigium-editor
 ```
 
 ### 2. Abhängigkeiten installieren
 ```bash
 npm install
-# oder
-yarn install
-# oder
-bun install
 ```
-
 
 ### 3. Entwicklungsserver starten
 ```bash
 npm run dev
 ```
+Die Anwendung öffnet sich unter `http://localhost:4300`.
 
-Die Anwendung ist nun unter `http://localhost:8080` verfügbar.
+---
 
-## 🏗 Build für Produktion
+## 📦 Produktions-Build & Deployment
 
+### Build lokal erstellen
 ```bash
-# Produktionsbuild erstellen
 npm run build
+```
+Der erstellte Produktions-Code befindet sich anschließend im Verzeichnis `dist/`.
 
-# Build für Entwicklung
-npm run build:dev
-
-# Lokale Vorschau des Builds
+### Vorschau des Builds
+```bash
 npm run preview
 ```
 
-## 🌐 Hosting und Deployment
-
-### Option 1: Vercel (Empfohlen)
-1. **Repository mit Vercel verbinden**
-   - Gehe zu [vercel.com](https://vercel.com)
-   - Importiere dein GitHub-Repository
-   - Vercel erkennt automatisch die Vite-Konfiguration
-
-2. **Build-Einstellungen** (falls nötig):
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-   - **Install Command**: `npm install`
-
-3. **Deploy**: Klicke auf "Deploy"
-
-### Option 2: Netlify
-1. **Repository verbinden**
-   - Gehe zu [netlify.com](https://netlify.com)
-   - Importiere dein GitHub-Repository
-
-2. **Build-Einstellungen**:
-   - **Build Command**: `npm run build`
-   - **Publish Directory**: `dist`
-
-3. **Deploy**: Netlify baut und deployed automatisch
-
-### Option 3: GitHub Pages
-1. **gh-pages installieren**:
+### Automatisches Deployment auf GitHub Pages
+Das Projekt enthält bereits eine fertige GitHub Actions Pipeline unter `.github/workflows/deploy.yml`:
+1. Push auf den `main`-Branch ausführen:
    ```bash
-   npm install --save-dev gh-pages
+   git add .
+   git commit -m "feat: release update"
+   git push origin main
    ```
+2. In den GitHub-Repository-Einstellungen unter **Settings > Pages** die Source auf **GitHub Actions** stellen.
+3. GitHub Actions baut und publiziert die Anwendung automatisch unter `https://<benutzername>.github.io/navigium-editor/`.
 
-2. **package.json erweitern**:
-   ```json
-   "scripts": {
-     "deploy": "gh-pages -d dist",
-     "predeploy": "npm run build"
-   }
-   ```
+---
 
-3. **Deploy**:
-   ```bash
-   npm run deploy
-   ```
+## 📖 Bedienungsanleitung
 
-### Option 4: Traditioneller Webserver
-1. **Build erstellen**:
-   ```bash
-   npm run build
-   ```
+### 1. App-Passwort-Gate
+* Das Passwort ist per SHA-256 gesichert und wird beim Administrator angefragt bzw. im Admin-Panel verwaltet.
+* Nach erfolgreicher Eingabe bleibt der Zugang im Browser verifiziert.
 
-2. **Dist-Verzeichnis auf Webserver hochladen**
-   - Der `dist`-Ordner enthält alle nötigen Dateien
-   - Stelle sicher, dass der Server SPA-Routing unterstützt (alle Routen zu `index.html` weiterleiten)
+### 2. Navigium Anmeldung
+* Melde dich mit deinen gewohnten Navigium-Zugangsdaten (Benutzername & Passwort) an.
+* Wähle die gewünschte Zielsprache (**Latein**, **Griechisch** oder **Englisch**).
+* Das Session-Token wird verschlüsselt gespeichert und alle 5 Minuten automatisch aktualisiert.
 
-### Option 5: Docker
-1. **Dockerfile erstellen**:
-   ```dockerfile
-   FROM nginx:alpine
-   COPY dist /usr/share/nginx/html
-   COPY nginx.conf /etc/nginx/nginx.conf
-   EXPOSE 80
-   CMD ["nginx", "-g", "daemon off;"]
-   ```
+### 3. Punkte verwalten & anpassen
+* **Aktueller Kasten & Punktestand:** Werden automatisch in übersichtlichen Karten angezeigt.
+* **Schnellauswahl:** Mit Buttons wie `-100`, `-10`, `+10`, `+100` oder `+1000` können Punkte direkt per Klick verändert werden.
+* **Manueller Zielwert:** Gib die exakte gewünschte Punktzahl ein – die App berechnet die Differenz und bewegt die Vokabeln entsprechend im Kasten.
+* **Live-Fortschritt:** Bei größeren Punktzahlen siehst du in Echtzeit, wie viele Vokabeln bereits synchronisiert wurden.
 
-2. **nginx.conf**:
-   ```nginx
-   events {}
-   http {
-     server {
-       listen 80;
-       location / {
-         root /usr/share/nginx/html;
-         try_files $uri $uri/ /index.html;
-       }
-     }
-   }
-   ```
+### 4. Admin-Panel (für `mahyno2022`)
+* Benutzer mit dem Namen `mahyno2022` erhalten in der Kopfzeile einen goldenen **Admin-Button**.
+* Im Admin-Panel können folgende Einstellungen vorgenommen werden:
+  * **App-Passwort ändern:** Neues Zugangspasswort für die App festlegen.
+  * **Persönliche Begrüßungen:** Individuelle Willkommensnachrichten für beliebige Benutzer konfigurieren.
+  * **Bekannte Benutzer:** Übersicht aller bisher angemeldeten Accounts.
 
-3. **Container bauen und starten**:
-   ```bash
-   docker build -t navigium-editor .
-   docker run -p 8080:80 navigium-editor
-   ```
+### 5. Request-Log
+* Ein Klick auf das Dokumenten-Icon in der Kopfzeile öffnet das integrierte **API-Log**.
+* Hier können alle gesendeten HTTP-Requests, Antworten, Laufzeiten und Fehlermeldungen transparent inspiziert werden.
 
-## 📖 Verwendung
-pp-Passwort-Gate
-1. Öffne die Anwendung
-2. Gib das App-Passwort ein (Standard: `cheater2025`)
-3. Klicke auf "Entsperren"
+---
 
-### Anmeldung
-1. Gib deinen Navigium-Benutzernamen und Passwort ein
-2. Wähle die Sprache (Latein/Griechisch/Englisch)
-3. Klicke auf "Anmelden"
-4. Du siehst optional deine persönliche Begrüßung (falls vom Admin gesetzt)
+## 🔒 Sicherheit & Datenschutz
 
-### Punkteverwaltung (Dashboard)
-- **Aktueller Punktestand**: Wird automatisch angezeigt
-- **Persönliche Begrüßung**: Zeigt deine vom Admin gesetzte Nachricht
-- **Punkte ändern**: Verwende die Schnellbuttons (+1, -1, +10, -10) oder gib einen Zielwert ein
-- **Punkte aktualisieren**: Klicke auf "Aktualisieren" oder verwende die Schnellbuttons
-- **Admin-Badge**: Sichtbar wenn du Administrator (mahyno2022) bist
+* **Keine Tracking-Cookies & keine Telemetrie:** Es werden keinerlei Analysedaten oder externe Telemetrie erhoben.
+* **Keine Zwischenserver:** Anmeldedaten und Tokens verlassen den Browser ausschließlich in Richtung der offiziellen Domain `navigium.de`.
+* **Sichere Session-Verwaltung:** Das Passwort für die automatische Sitzungsverlängerung wird mit AES-256 verschlüsselt im `localStorage` hinterlegt und kann jederzeit durch Abmelden (`Logout`) unwiderruflich gelöscht werden.
 
-### Admin-Panel (für mahyno2022)
-1. Klicke auf das Schild-Icon im Dashboard
-2. Du kannst folgende Aufgaben durchführen:
-   - **Bekannte Benutzer verwalten**: Benutzer hinzufügen/löschen
-   - **Greetings verwalten**: Persönliche Begrüßungen für jeden Benutzer setzen/löschen
-   - **App-Passwort ändern**: Neues Passwort setzen und mit Server synchronisieren
-3. Alle Änderungen werden lokal und auf dem Server gespeichert
+---
 
-### API-Logs
-- Klappe den "API-Anfragen"-Bereich auf, um alle API-Aufrufe zu sehen
-- Logs enthalten Request-Details, Response-Status, Fehler und Zeitstempel
-- Max. 100 Log-Einträge werden im Speicher gespeichert zu sehen
-- Logs enthalten Request-Details, Response-Status und Fehler
-- Logs werden automatisch alle 5 Minuten mit der Sitzungsverlängerung aktualisiert
+## 💻 Verfügbare Skripte
 
-## 🔌 API-Integration
+| Befehl | Zweck |
+|---|---|
+| `npm run dev` | Startet den Vite-Entwicklungsserver mit Hot-Reloading |
+| `npm run build` | Kompiliert TypeScript und generiert das produktionsreife Bundle in `dist/` |
+| `npm run preview` | Startet einen lokalen Server zur Überprüfung des `dist/`-Builds |
+| `npm run lint` | Führt ESLint zur Prüfung der Code-Qualität aus (aktuell **0 Fehler**) |
 
-### n8n Webhook Base URL
-```
-https://n8n.nemserver.duckdns.org/webhook/navigium
-```
-
-### Unterstützte Endpunkte (GET-Anfragen)
-Alle Anfragen verwenden den Header: `x-internal-key: BANANA`
-
-| Endpunkt | Parameter | Response | Beschreibung |
-|----------|-----------|----------|---------------|
-| `login` | `user`, `password`, `lang` | `{ username, aktuellerKarteikasten, gesamtpunkteKarteikasten }` | Benutzer-Authentifizierung |
-| `points` | `name`, `lang` | `{ aktuellerKarteikasten, gesamtpunkteKarteikasten }` | Aktuellen Punktestand abrufen |
-| `setpoints` | `name`, `diff`, `lang` | `{ aktuellerKarteikasten, gesamtpunkteKarteikasten }` | Punkte hinzufügen/subtrahieren |
-| `password` | `password` | `{ status: "success" }` | App-Passwort auf Server setzen |
-| `getpassword` | (keine) | `{ password: string }` | App-Passwort vom Server abrufen |
-| `greeting` | `user`, `greeting` | `{ status: "success" }` | Begrüßung für Benutzer setzen |
-| `greetings` | (keine) | `[ { user, greeting }, ... ]` | Alle Begrüßungen abrufen |
-
-### Verschlüsselung & Speicherung
-- **Sensitive Daten**: AES-256 Verschlüsselung mit TweetNaCl.js
-- **localStorage Keys**:
-  - `navigium_session_v2` - Verschlüsselte Benutzersitzung
-  - `app_password_v2` - Verschlüsseltes App-Passwort
-  - `user_greetings_v2` - Verschlüsselte Begrüßungen
-  - `known_users_v2` - Verschlüsselte Benutzerliste
-  - `app_authenticated` - Authentifizierungsflag
-- **Auto-Migration**: Alte unverschlüsselte localStorage-Einträge werden automatisch migriert
-- **Server-Fallback**: Falls Server nicht erreichbar, werden lokale Werte verwendet
-
-### Sitzungsverwaltung
-- Automatische Sitzungsverlängerung: Alle 5 Minuten
-- Benutzername und Passwort werden lokal für Auto-Refresh gespeichert
-- Sitzungen persisten über Browser-Neuladen
-
-## 🧪 Entwicklung
-
-### Code-Qualität
-```bash
-# Linting
-npm run lint
-
-# TypeScript-Prüfung
-npx tsc --noEmit
-```
-
-### Projektstruktur
-```
-src/
-├── components/                # Wiederverwendbare UI-Komponenten
-│   ├── ui/                   # shadcn/ui Komponenten
-│   ├── AppPasswordGate.tsx   # App-Level Authentifizierung
-│   ├── RequestLog.tsx        # API-Logging-Komponente
-│   ├── ThemeToggle.tsx       # Dark Mode Toggle
-│   └── NavLink.tsx           # Navigation Link Komponente
-├── pages/                     # Seitenkomponenten
-│   ├── Login.tsx             # Anmeldeseite
-│   ├── Dashboard.tsx         # Haupt-Dashboard mit Punkteverwaltung
-│   ├── AdminPanel.tsx        # Admin-Panel (nur für mahyno2022)
-│   ├── Index.tsx             # Home-Weiterleitung
-│   └── NotFound.tsx          # 404-Seite
-├── lib/                       # Hilfsfunktionen und API
-│   ├── navigium-api.ts       # API-Integration, Session, Auth, Greetings
-│   ├── crypto.ts             # AES-256 Verschlüsselung
-│   └── utils.ts              # Utility-Funktionen
-├── hooks/                     # Custom React Hooks
-│   ├── use-theme.tsx         # Theme Provider für Dark Mode
-│   ├── use-toast.ts          # Toast Notifications
-│   └── use-mobile.tsx        # Mob + Dark Mode Support
-- **State Management**: React Query für Server-Zustand, localStorage für Persistierung
-- **Error Handling**: Toast-Benachrichtigungen für Fehler mit Fallback auf localStorage
-- **Logging**: Alle API-Aufrufe werden automatisch geloggt (in-memory, max. 100 Einträge)
-- **Verschlüsselung**: AES-256 für alle sensitive Daten in localStorage
-- **Authentication**: Multi-Layer (App-Passwort-Gate → Sitzungsbasierte Auth)
-- **Admin**: Hardcoded Benutzer `mahyno2022` hat Zugriff auf Admin-Panel
-- **Default App-Passwort**: `cheater2025` (kann im Admin-Panel geändert werden)r
-```
-
-### Wichtige Konventionen
-- **Path Aliases**: Verwende `@/` für `src/`
-- **Komponenten**: Funktionale Komponenten mit TypeScript
-- **Styling**: Tailwind CSS Klassen
-- **State Management**: React Query für Server-Zustand
-- **Error Handling**: Toast-Benachrichtigungen für Fehler
-- **Logging**: Alle API-Aufrufe werden automatisch geloggt
-
-## 🤝 Mitwirken
-
-1. Fork das Repository
-2. Erstelle einen Feature-Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit deine Änderungen (`git commit -m 'Add some AmazingFeature'`)
-4. Push zum Branch (`git push origin feature/AmazingFeature`)
-5. Öffne einen Pull Request
+---
 
 ## 📄 Lizenz
 
-Dieses Projekt ist privat und nicht für die öffentliche Verwendung bestimmt.
-
-## 🆘 Support
-
-Bei Fragen oder Problemen:
-1. Überprüfe die API-Logs in der Anwendung
-2. Stelle sicher, dass die Navigium-API erreichbar ist
-3. Überprüfe die Browser-Konsole auf Fehler
-
-## 🔄 Updates
-
-Die Anwendung lädt sich automatisch neu bei Änderungen während der Entwicklung. Für Produktions-Updates muss die Anwendung neu gebaut und deployed werden.</content>
-<parameter name="filePath">c:\Users\marya\coding\navigium_app\navigium-editor\README.md
+Dieses Projekt ist privat und dient ausschließlich zu Bildungs- und Forschungszwecken. Alle Rechte an der Plattform *Navigium* liegen beim jeweiligen Rechteinhaber.

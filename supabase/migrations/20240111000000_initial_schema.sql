@@ -58,5 +58,5 @@ CREATE POLICY "Allow all operations on known_users" ON known_users FOR ALL USING
 
 -- Insert default app password (hashed)
 -- Note: In production, hash the password properly
-INSERT INTO app_settings (key, value) VALUES ('app_password', 'cheater2025')
+INSERT INTO app_settings (key, value) VALUES ('app_password', '[ENCRYPTED_DEFAULT_HASH]')
 ON CONFLICT (key) DO NOTHING;

@@ -24,7 +24,7 @@ This is a React SPA for managing points in the Navigium Latin/Greek learning pla
 - **App Password Management**:
   - `getAppPassword()`, `setAppPassword()`, `authenticateApp()`, `clearAppAuth()`
   - Server sync: `syncAppPasswordToServer()`, `getAppPasswordFromServer()`
-  - Default password: `"cheater2025"` (hardcoded fallback)
+  - Hashed authentication: SHA-256 hash comparison (no plaintext password in code)
   - Supports local fallback if server unavailable
 - **User Greetings Management**:
   - `getGreetings()`, `getGreetingForUser()`, `setGreetingForUser()`
@@ -150,6 +150,5 @@ Expected Responses:
 - All sensitive data encrypted with AES-256
 - API key hardcoded as `"BANANA"` (consider environment variables for production)
 - App password and greetings synced with server but cached locally
-- Admin user hardcoded as `"mahyno2022"` 
-- No client-side validation beyond basic form requirements</content>
-<parameter name="filePath">c:\Users\marya\coding\navigium_app\navigium-editor\.github\copilot-instructions.md
+- Admin user hardcoded as `"mahyno2022"`
+- No client-side validation beyond basic form requirements

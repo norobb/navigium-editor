@@ -25,22 +25,11 @@ export default function Login() {
     try {
       const response = await login(user, password, lang);
       
-      // Add user to known users
-      await addKnownUser(response.username);
-      
-      await saveSession({
-        username: response.username,
-        password, // Store password for session refresh
-        lang,
-        aktuellerKarteikasten: response.aktuellerKarteikasten,
-        gesamtpunkteKarteikasten: response.gesamtpunkteKarteikasten,
-      });
-
       // Check for personalized greeting
       const personalGreeting = await getGreetingForUser(response.username);
       
       toast({
-        title: "Erfolgreich eingeloggt!",
+        title: "Erfolgreich angemeldet!",
         description: personalGreeting || `Willkommen zurück, ${response.username}`,
       });
 
@@ -68,16 +57,21 @@ export default function Login() {
         <ThemeToggle />
       </div>
       
-      <Card className="w-full max-w-md relative">
-        <CardHeader className="text-center space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary/60" />
-            <CardTitle className="text-xl sm:text-2xl font-bold">Navigium Punkte-Editor</CardTitle>
-            <Sparkles className="h-5 w-5 text-primary/60" />
+      <Card className="w-full max-w-md relative shadow-2xl backdrop-blur-xl bg-card/90 border-border/50">
+        <CardHeader className="text-center space-y-3 pb-2">
+          <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-1 drop-shadow-md">
+            <img src="./logo.svg" alt="Navigium Logo" className="w-16 h-16 object-contain" />
           </div>
-          <CardDescription className="text-sm">
-            Melde dich mit deinen Navigium-Zugangsdaten an
-          </CardDescription>
+          <div className="space-y-1">
+            <div className="flex items-center justify-center gap-2">
+              <Sparkles className="h-4 w-4 text-primary/70" />
+              <CardTitle className="text-2xl font-bold tracking-tight">Navigium Punkte-Editor</CardTitle>
+              <Sparkles className="h-4 w-4 text-primary/70" />
+            </div>
+            <CardDescription className="text-sm">
+              Direkter Login mit deinen Navigium-Zugangsdaten
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">

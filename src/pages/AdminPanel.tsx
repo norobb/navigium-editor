@@ -12,11 +12,10 @@ import {
   getGreetings,
   setGreetingForUser,
   clearAppAuth,
-  getAppPassword,
   setAppPassword,
   UserGreeting,
 } from "@/lib/navigium-api";
-import { ArrowLeft, Users, MessageSquare, Trash2, Save, Shield, LogOut, Key, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Users, MessageSquare, Trash2, Save, Shield, LogOut, Key, CheckCircle } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -28,20 +27,22 @@ export default function AdminPanel() {
   const [newGreeting, setNewGreeting] = useState("");
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editGreeting, setEditGreeting] = useState("");
-  const [currentAppPassword, setCurrentAppPassword] = useState("");
   const [newAppPassword, setNewAppPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     const initAdmin = async () => {
+      setIsVerifying(true);
       const session = await getSession();
-      const admin = await isAdmin();
+      // Server-verified admin check: verifies token directly with Navigium
+      const admin = await isAdmin(true);
+
       if (!session || !admin) {
         toast({
-          title: "Kein Zugang",
-          description: "Du hast keinen Zugang zum Admin Panel.",
+          title: "Zugriff verweigert",
+          description: "Keine gültigen Administrator-Rechte oder ungültige Sitzung.",
           variant: "destructive",
         });
         navigate("/dashboard");
@@ -49,6 +50,7 @@ export default function AdminPanel() {
       }
 
       await loadData();
+      setIsVerifying(false);
     };
 
     initAdmin();
@@ -57,10 +59,8 @@ export default function AdminPanel() {
   const loadData = async () => {
     const knownUsers = await getKnownUsers();
     const userGreetings = await getGreetings();
-    const appPassword = await getAppPassword();
     setUsers(knownUsers);
     setGreetings(userGreetings);
-    setCurrentAppPassword(appPassword);
   };
 
   const handleAddGreeting = async () => {
@@ -88,12 +88,12 @@ export default function AdminPanel() {
       setNewUsername("");
       setNewGreeting("");
       await loadData();
-      
+
       toast({
         title: "Gespeichert",
         description: `Begrüßung für "${savedUsername}" wurde gespeichert.`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Fehler",
         description: "Begrüßung konnte nicht gespeichert werden.",
@@ -103,19 +103,19 @@ export default function AdminPanel() {
   };
 
   const handleEditGreeting = (username: string) => {
-    const current = greetings.find(g => g.username === username);
+    const current = greetings.find((g) => g.username.toLowerCase() === username.toLowerCase());
     setEditingUser(username);
     setEditGreeting(current?.greeting || "");
   };
 
   const handleSaveEdit = async () => {
     if (!editingUser) return;
-    
+
     await setGreetingForUser(editingUser, editGreeting);
     setEditingUser(null);
     setEditGreeting("");
     await loadData();
-    
+
     toast({
       title: "Gespeichert",
       description: "Begrüßung wurde aktualisiert.",
@@ -125,7 +125,7 @@ export default function AdminPanel() {
   const handleDeleteGreeting = async (username: string) => {
     await setGreetingForUser(username, "");
     await loadData();
-    
+
     toast({
       title: "Gelöscht",
       description: `Begrüßung für ${username} wurde entfernt.`,
@@ -135,8 +135,8 @@ export default function AdminPanel() {
   const handleResetAppAuth = () => {
     clearAppAuth();
     toast({
-      title: "Zurückgesetzt",
-      description: "Alle Benutzer müssen sich erneut anmelden.",
+      title: "Sitzungen zurückgesetzt",
+      description: "Alle Benutzer müssen das App-Passwort erneut eingeben.",
     });
   };
 
@@ -159,42 +159,64 @@ export default function AdminPanel() {
       return;
     }
 
-    await setAppPassword(newAppPassword);
-    clearAppAuth(); // Force re-authentication with new password
-    setCurrentAppPassword(newAppPassword);
+    await setAppPassword(newAppPassword.trim());
+    clearAppAuth(); // Force re-authentication
     setNewAppPassword("");
-    
+
     toast({
       title: "Passwort geändert",
-      description: "Das App-Passwort wurde erfolgreich geändert.",
+      description: "Das App-Passwort wurde sicher verschlüsselt (SHA-256) aktualisiert.",
     });
   };
 
+  if (isVerifying) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Administrator-Rechte werden verifiziert...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background p-3 sm:p-4">
-      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-background p-3 sm:p-6 relative overflow-hidden">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 relative">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-card/70 backdrop-blur-xl border border-border/40 shadow-sm">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/dashboard")}
+              className="h-9 px-2"
+            >
               <ArrowLeft className="h-4 w-4" />
             </Button>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0">
+              <img src="./logo.svg" alt="Navigium Logo" className="w-10 h-10 object-contain" />
+            </div>
             <div>
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Admin Panel</h1>
+                <Shield className="h-5 w-5 text-amber-500" />
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  Admin Panel
+                </h1>
               </div>
-              <p className="text-sm text-muted-foreground">Benutzer und Einstellungen verwalten</p>
+              <p className="text-sm text-muted-foreground">
+                Benutzer, Begrüßungen und App-Passwort verwalten
+              </p>
             </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
             <ThemeToggle />
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="grid gap-3 sm:gap-4 grid-cols-2">
-          <Card>
+          <Card className="backdrop-blur-xl bg-card/80 border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Bekannte Benutzer</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -204,7 +226,7 @@ export default function AdminPanel() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="backdrop-blur-xl bg-card/80 border-border/50">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Begrüßungen</CardTitle>
               <MessageSquare className="h-4 w-4 text-muted-foreground" />
@@ -216,54 +238,44 @@ export default function AdminPanel() {
         </div>
 
         {/* App Password Settings */}
-        <Card>
+        <Card className="backdrop-blur-xl bg-card/90 border-border/50 shadow-md">
           <CardHeader>
             <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-              <Key className="h-4 w-4" />
-              App-Passwort
+              <Key className="h-4 w-4 text-amber-500" />
+              App-Zugangspasswort
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm">
-              Ändere das allgemeine Zugangspasswort für die App
+              Das App-Passwort wird niemals im Klartext im Quellcode oder im Browser angezeigt, sondern ist kryptographisch als SHA-256 Hash gesichert.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Aktuelles Passwort</Label>
-              <div className="flex gap-2">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  value={currentAppPassword}
-                  readOnly
-                  className="font-mono"
-                />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                <span className="text-sm text-foreground font-medium">
+                  Status: Aktiv geschützt (SHA-256 Hash)
+                </span>
               </div>
+              <Button variant="outline" size="sm" onClick={handleResetAppAuth} className="h-8 text-xs">
+                <LogOut className="mr-1 h-3 w-3" />
+                Auth zurücksetzen
+              </Button>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="newPassword">Neues Passwort</Label>
+
+            <div className="space-y-2">
+              <Label htmlFor="newPassword" className="text-sm font-medium">Neues App-Passwort festlegen</Label>
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   id="newPassword"
                   type="password"
                   placeholder="Neues Passwort eingeben"
                   value={newAppPassword}
                   onChange={(e) => setNewAppPassword(e.target.value)}
+                  className="flex-1 h-10"
                 />
-              </div>
-              <div className="flex items-end gap-2">
-                <Button onClick={handleChangePassword} className="flex-1">
+                <Button onClick={handleChangePassword} className="h-10 px-5">
                   <Save className="mr-2 h-4 w-4" />
-                  Ändern
-                </Button>
-                <Button variant="outline" onClick={handleResetAppAuth}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Reset
+                  Speichern
                 </Button>
               </div>
             </div>
@@ -271,29 +283,26 @@ export default function AdminPanel() {
         </Card>
 
         {/* Add Greeting */}
-        <Card>
+        <Card className="backdrop-blur-xl bg-card/90 border-border/50">
           <CardHeader>
             <CardTitle className="text-base sm:text-lg">Neue Begrüßung hinzufügen</CardTitle>
             <CardDescription className="text-xs sm:text-sm">
-              Personalisierte Begrüßungsnachricht für einen beliebigen Benutzer festlegen (auch unbekannte)
+              Personalisierte Begrüßungsnachricht für einen bestimmten Benutzer festlegen
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="newUsername">Benutzername</Label>
+                <Label htmlFor="newUsername" className="text-sm">Benutzername</Label>
                 <Input
                   id="newUsername"
-                  placeholder="Beliebigen Benutzernamen eingeben"
+                  placeholder="z.B. maxmuster"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Auch für noch nicht registrierte Benutzer möglich
-                </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="newGreeting">Begrüßungstext</Label>
+                <Label htmlFor="newGreeting" className="text-sm">Begrüßungstext</Label>
                 <Input
                   id="newGreeting"
                   placeholder="z.B. Willkommen zurück, Max!"
@@ -310,7 +319,7 @@ export default function AdminPanel() {
         </Card>
 
         {/* Greetings List */}
-        <Card>
+        <Card className="backdrop-blur-xl bg-card/90 border-border/50">
           <CardHeader>
             <CardTitle className="text-base sm:text-lg">Alle Begrüßungen</CardTitle>
             <CardDescription className="text-xs sm:text-sm">
@@ -320,8 +329,8 @@ export default function AdminPanel() {
           <CardContent>
             <ScrollArea className="h-[250px]">
               {greetings.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Noch keine Begrüßungen vorhanden
+                <p className="text-center text-muted-foreground py-8 text-sm">
+                  Noch keine benutzerdefinierten Begrüßungen vorhanden
                 </p>
               ) : (
                 <Table>
@@ -367,7 +376,7 @@ export default function AdminPanel() {
                                 size="sm"
                                 onClick={() => handleDeleteGreeting(greeting.username)}
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-3 w-3 text-destructive" />
                               </Button>
                             </div>
                           )}
@@ -382,17 +391,17 @@ export default function AdminPanel() {
         </Card>
 
         {/* Known Users */}
-        <Card>
+        <Card className="backdrop-blur-xl bg-card/90 border-border/50">
           <CardHeader>
             <CardTitle className="text-base sm:text-lg">Bekannte Benutzer</CardTitle>
             <CardDescription className="text-xs sm:text-sm">
-              Liste aller Benutzer, die sich angemeldet haben
+              Liste aller authentifizierten Benutzer, die sich erfolgreich angemeldet haben
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ScrollArea className="h-[150px]">
               {users.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
+                <p className="text-center text-muted-foreground py-8 text-sm">
                   Noch keine Benutzer bekannt
                 </p>
               ) : (
@@ -400,7 +409,7 @@ export default function AdminPanel() {
                   {users.map((user) => (
                     <div
                       key={user}
-                      className="px-3 py-1.5 bg-secondary/80 backdrop-blur-sm text-secondary-foreground rounded-full text-sm border border-border/30"
+                      className="px-3 py-1.5 bg-secondary/80 backdrop-blur-sm text-secondary-foreground rounded-full text-xs font-medium border border-border/30"
                     >
                       {user}
                     </div>
