@@ -23,7 +23,7 @@
 * **100% Sicher & Privat:** Anmeldedaten und Sitzungs-Tokens werden ausschließlich verschlüsselt (AES-256) im lokalen Browser-Speicher abgelegt. Nichts wird an Dritte gesendet.
 * **Optimiert für GitHub Pages:** Vollständige Unterstützung für GitHub Pages via `HashRouter`, relativen Asset-Pfaden (`base: "./"`) und einer automatisierten GitHub Actions Deployment-Pipeline.
 * **Live-Batch-Synchronisation:** Vokabelbewegungen (`vor` / `zurueck`) werden mit parallelen Concurrency-Batches verarbeitet – inklusive animierter Echtzeit-Fortschrittsanzeige.
-* **Modernes Liquid-Glass Design:** Inspiriert von Apples modernem Design-System mit nativem Dark Mode, reaktiven Karten und eleganten Micro-Interactions.
+* **Ruhiges Interface:** Graphit-Neutraltöne, ein Tintenblau als Akzent, IBM Plex Sans + Mono; der Punktestand steht auf einer linierten Karteikarte. Heller und dunkler Modus.
 * **Multi-Layer Zugriffskontrolle:** App-weites Zugangspasswort (kryptographisch per SHA-256 gesichert, im Admin-Panel konfigurierbar) + dediziertes Admin-Panel für den autorisierten Administrator.
 
 ---

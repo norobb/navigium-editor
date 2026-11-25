@@ -2,100 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Liquid Glass Design System - Apple-inspired glassmorphism
-   All colors MUST be HSL.
-*/
-
+/* Graphite neutrals, ink-blue accent (Füllertinte). All colors HSL. */
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 20% 10%;
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 0 0% 9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 0 0% 9%;
 
-    --primary: 220 90% 56%;
+    --primary: 222 70% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 92%;
-    --secondary-foreground: 220 20% 20%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 0 0% 9%;
 
-    --muted: 220 14% 92%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 220 90% 96%;
-    --accent-foreground: 220 90% 40%;
+    --accent: 240 5% 94%;
+    --accent-foreground: 0 0% 9%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
+    --positive: 142 72% 29%;
 
-    --border: 220 13% 87%;
-    --input: 220 13% 87%;
-    --ring: 220 90% 56%;
+    --border: 0 0% 9% / 0.09;
+    --input: 0 0% 9% / 0.12;
+    --ring: 222 70% 40%;
 
-    --radius: 1rem;
+    /* Karteikarte */
+    --card-rule: 210 40% 50% / 0.14;
+    --card-margin: 0 70% 55% / 0.45;
 
-    /* Liquid Glass specific */
-    --glass-bg: 0 0% 100% / 0.7;
-    --glass-border: 0 0% 100% / 0.3;
-    --glass-shadow: 220 90% 56% / 0.1;
-    --glass-blur: 20px;
+    --radius: 0.625rem;
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-foreground: 0 0% 32%;
+    --sidebar-primary: 0 0% 9%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 240 5% 96%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 9% / 0.09;
+    --sidebar-ring: 222 70% 40%;
   }
 
   .dark {
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
+    --background: 240 2% 8%;
+    --foreground: 0 0% 93%;
 
-    --card: 222 47% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 4% 10%;
+    --card-foreground: 0 0% 93%;
 
-    --popover: 222 47% 12%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 4% 10%;
+    --popover-foreground: 0 0% 93%;
 
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 8%;
+    --primary: 222 90% 76%;
+    --primary-foreground: 240 2% 8%;
 
-    --secondary: 217 33% 20%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 3% 14%;
+    --secondary-foreground: 0 0% 93%;
 
-    --muted: 217 33% 20%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 240 3% 14%;
+    --muted-foreground: 240 2% 56%;
 
-    --accent: 217 91% 20%;
-    --accent-foreground: 217 91% 75%;
+    --accent: 240 3% 14%;
+    --accent-foreground: 0 0% 93%;
 
-    --destructive: 0 63% 45%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 358 75% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --positive: 151 50% 53%;
 
-    --border: 217 33% 22%;
-    --input: 217 33% 22%;
-    --ring: 217 91% 60%;
+    --border: 0 0% 93% / 0.08;
+    --input: 0 0% 93% / 0.12;
+    --ring: 222 90% 76%;
 
-    /* Dark mode glass */
-    --glass-bg: 222 47% 12% / 0.8;
-    --glass-border: 217 91% 60% / 0.15;
-    --glass-shadow: 217 91% 60% / 0.15;
+    --card-rule: 210 40% 70% / 0.08;
+    --card-margin: 0 70% 62% / 0.4;
 
-    --sidebar-background: 222 47% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 217 91% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 18%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 217 33% 20%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-background: 240 3% 6%;
+    --sidebar-foreground: 240 2% 64%;
+    --sidebar-primary: 0 0% 93%;
+    --sidebar-primary-foreground: 240 2% 8%;
+    --sidebar-accent: 240 3% 14%;
+    --sidebar-accent-foreground: 0 0% 93%;
+    --sidebar-border: 0 0% 93% / 0.08;
+    --sidebar-ring: 222 90% 76%;
   }
 }
 
@@ -104,63 +99,28 @@
     @apply border-border;
   }
 
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    background-image: 
-      radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--primary) / 0.15), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 100%, hsl(var(--accent) / 0.1), transparent);
     min-height: 100vh;
   }
 }
 
-/* Liquid Glass Card Styles */
 @layer components {
-  .glass-card {
-    background: hsl(var(--glass-bg));
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid hsl(var(--glass-border));
-    box-shadow: 
-      0 4px 24px -4px hsl(var(--glass-shadow)),
-      0 0 0 1px hsl(var(--glass-border)),
-      inset 0 1px 0 hsl(0 0% 100% / 0.1);
-  }
-
-  .glass-button {
-    background: hsl(var(--glass-bg));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--glass-border));
-    transition: all 0.2s ease;
-  }
-
-  .glass-button:hover {
-    background: hsl(var(--primary) / 0.1);
-    border-color: hsl(var(--primary) / 0.3);
-    box-shadow: 0 4px 16px -4px hsl(var(--primary) / 0.2);
-  }
-
-  .glass-input {
-    background: hsl(var(--glass-bg));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid hsl(var(--glass-border));
-    transition: all 0.2s ease;
-  }
-
-  .glass-input:focus {
-    border-color: hsl(var(--primary) / 0.5);
-    box-shadow: 
-      0 0 0 3px hsl(var(--primary) / 0.1),
-      0 4px 16px -4px hsl(var(--primary) / 0.15);
-  }
-}
-
-/* Toast Styles - Compact and non-intrusive */
-@layer utilities {
-  .toast-compact {
-    max-width: 320px !important;
-    padding: 12px 16px !important;
-    font-size: 13px !important;
+  /* Liniertes Karteikarten-Papier mit rotem Randstrich */
+  .index-card {
+    background-color: hsl(var(--card));
+    background-image:
+      linear-gradient(to right, transparent 39px, hsl(var(--card-margin)) 39px, hsl(var(--card-margin)) 40px, transparent 40px),
+      repeating-linear-gradient(to bottom, transparent 0, transparent 27px, hsl(var(--card-rule)) 27px, hsl(var(--card-rule)) 28px);
+    background-position: 0 0, 0 48px;
+    background-repeat: no-repeat, repeat;
   }
 }

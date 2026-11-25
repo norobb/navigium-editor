@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -17,24 +16,14 @@ import {
   isAdmin,
   getGreetingForUser,
 } from "@/lib/navigium-api";
-import {
-  Loader2,
-  LogOut,
-  Save,
-  Plus,
-  Minus,
-  Trophy,
-  Target,
-  RefreshCw,
-  FileText,
-  Shield,
-  Sparkles,
-} from "lucide-react";
+import { RefreshCw, ScrollText, Shield } from "lucide-react";
 import RequestLog from "@/components/RequestLog";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LOGIN_REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const QUICK_STEPS = [-100, -10, 10, 100, 1000];
+const LANG_LABELS: Record<string, string> = { LA: "Latein", GRC: "Griechisch", EN: "Englisch" };
 
 export default function Dashboard() {
   const [session, setSession] = useState<UserSession | null>(null);
@@ -102,10 +91,7 @@ export default function Dashboard() {
 
   const handleLogout = () => {
     clearSession();
-    toast({
-      title: "Ausgeloggt",
-      description: "Du wurdest erfolgreich abgemeldet.",
-    });
+    toast({ title: "Abgemeldet" });
     navigate("/");
   };
 
@@ -137,18 +123,18 @@ export default function Dashboard() {
       if (diff === 0) {
         toast({
           title: "Aktualisiert",
-          description: `Punktestand: ${result.gesamtpunkteKarteikasten}`,
+          description: `Punktestand: ${result.gesamtpunkteKarteikasten.toLocaleString("de-DE")}`,
         });
       } else {
         toast({
-          title: diff > 0 ? `+${diff} Punkte hinzugefügt` : `${diff} Punkte angepasst`,
-          description: `Neuer Punktestand: ${result.gesamtpunkteKarteikasten}`,
+          title: diff > 0 ? `${diff} Punkte hinzugefügt` : `${-diff} Punkte abgezogen`,
+          description: `Neuer Punktestand: ${result.gesamtpunkteKarteikasten.toLocaleString("de-DE")}`,
         });
       }
     } catch (error) {
       setLogRefreshTrigger((prev) => prev + 1);
       toast({
-        title: "Fehler beim Anpassen",
+        title: "Punktestand nicht geändert",
         description: error instanceof Error ? error.message : "Unbekannter Fehler",
         variant: "destructive",
       });
@@ -166,7 +152,7 @@ export default function Dashboard() {
     if (isNaN(target)) {
       toast({
         title: "Ungültige Eingabe",
-        description: "Bitte gib eine gültige Zahl ein.",
+        description: "Gib eine ganze Zahl ein.",
         variant: "destructive",
       });
       return;
@@ -208,12 +194,12 @@ export default function Dashboard() {
 
       toast({
         title: "Aktualisiert",
-        description: `Punktestand: ${response.gesamtpunkteKarteikasten}`,
+        description: `Punktestand: ${response.gesamtpunkteKarteikasten.toLocaleString("de-DE")}`,
       });
     } catch (error) {
       setLogRefreshTrigger((prev) => prev + 1);
       toast({
-        title: "Fehler",
+        title: "Neu laden fehlgeschlagen",
         description: error instanceof Error ? error.message : "Unbekannter Fehler",
         variant: "destructive",
       });
@@ -231,278 +217,165 @@ export default function Dashboard() {
       ? Math.min(100, Math.round((progress.done / progress.total) * 100))
       : 0;
 
-  return (
-    <div className="min-h-screen p-3 sm:p-6 relative overflow-hidden bg-background">
-      {/* Ambient background glows */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-10 right-10 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div
-          className="absolute bottom-10 left-10 w-80 h-80 bg-accent/15 rounded-full blur-3xl animate-pulse"
-          style={{ animationDelay: "1s" }}
-        />
-      </div>
+  const parsedTarget = parseInt(targetPoints, 10);
+  const diff = isNaN(parsedTarget) ? null : parsedTarget - session.gesamtpunkteKarteikasten;
+  const fmt = (n: number) => n.toLocaleString("de-DE");
+  const signed = (n: number) => (n > 0 ? `+${fmt(n)}` : n < 0 ? `−${fmt(-n)}` : "±0");
 
-      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 relative">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-card/70 backdrop-blur-xl border border-border/40 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center drop-shadow-sm flex-shrink-0">
-              <img src="./logo.svg" alt="Navigium Logo" className="w-12 h-12 object-contain" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                  Navigium Editor
-                </h1>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary font-medium border border-primary/20">
-                  v2.0
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {personalGreeting || `Eingeloggt als ${session.username}`}
-              </p>
-            </div>
+  return (
+    <div className="min-h-screen">
+      <header className="border-b">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between gap-4 px-4 sm:px-8">
+          <div className="flex min-w-0 items-center gap-2">
+            <img src="./logo.svg" alt="" className="h-6 w-6 shrink-0" />
+            <span className="text-[15px] font-medium">Punkte-Editor</span>
+            <span className="truncate text-sm text-muted-foreground">
+              {personalGreeting || session.username}
+            </span>
           </div>
-          <div className="flex gap-2 flex-wrap items-center">
-            <ThemeToggle />
+          <nav className="flex items-center gap-1 text-muted-foreground">
             <Button
-              variant="outline"
-              size="sm"
+              variant="ghost"
+              size="icon"
               onClick={handleRefresh}
               disabled={isLoading}
-              title="Punkte aktualisieren"
-              className="h-9 px-3"
+              title="Punktestand neu laden"
+              aria-label="Punktestand neu laden"
             >
-              <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? "animate-spin text-primary" : ""}`} />
-              <span className="hidden sm:inline">Refresh</span>
+              <RefreshCw className={isLoading ? "animate-spin" : ""} />
             </Button>
             <Button
-              variant="outline"
-              size="sm"
+              variant="ghost"
+              size="icon"
               onClick={() => setShowLog(!showLog)}
-              title="Request Log anzeigen"
-              className="h-9 px-3"
+              title="Protokoll"
+              aria-label="Protokoll"
+              aria-pressed={showLog}
+              className={showLog ? "bg-accent text-foreground" : ""}
             >
-              <FileText className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Log</span>
+              <ScrollText />
             </Button>
             {isAdminUser && (
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={() => navigate("/admin")}
-                title="Admin-Panel"
-                className="h-9 px-3 border-amber-500/30 text-amber-500 hover:text-amber-400"
+                title="Verwaltung"
+                aria-label="Verwaltung"
               >
-                <Shield className="h-4 w-4 mr-1" />
-                <span className="hidden sm:inline">Admin</span>
+                <Shield />
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              title="Abmelden"
-              className="h-9 px-3 text-destructive hover:text-destructive"
-            >
-              <LogOut className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Logout</span>
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="ml-1 text-muted-foreground">
+              Abmelden
             </Button>
-          </div>
+          </nav>
         </div>
+      </header>
 
-        {/* Live Progress Bar when updating points */}
-        {isLoading && progress && (
-          <Card className="border-primary/40 bg-primary/5 shadow-md animate-in fade-in-50">
-            <CardContent className="pt-4 pb-4 space-y-2">
-              <div className="flex justify-between text-xs sm:text-sm font-medium">
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  Vokabeln werden synchronisiert...
-                </span>
-                <span>
-                  {progress.done} / {progress.total} ({progressPercent}%)
-                </span>
-              </div>
-              <Progress value={progressPercent} className="h-2" />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Points Display */}
-        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
-          <Card className="backdrop-blur-xl bg-card/80 border-border/50 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Aktueller Karteikasten
-              </CardTitle>
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Target className="h-4 w-4 text-primary" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-bold text-foreground break-all">
-                {session.aktuellerKarteikasten || "—"}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Schule: <span className="font-semibold text-foreground/80">{session.school || "GSJ_HAMBURG"}</span> • Sprache:{" "}
-                <span className="font-semibold text-foreground/80">{session.lang || "LA"}</span>
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="backdrop-blur-xl bg-card/80 border-border/50 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Gesamtpunkte
-              </CardTitle>
-              <div className="p-2 rounded-lg bg-amber-500/10">
-                <Trophy className="h-4 w-4 text-amber-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl sm:text-3xl font-bold text-primary">
-                {session.gesamtpunkteKarteikasten.toLocaleString("de-DE")}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Synchronisierter Navigium-Punktestand
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Points Editor */}
-        <Card className="backdrop-blur-xl bg-card/90 border-border/50 shadow-md">
-          <CardHeader className="pb-3 sm:pb-4 border-b border-border/40">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <CardTitle className="text-base sm:text-lg">Punktestand modifizieren</CardTitle>
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-8 sm:py-12">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-12 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+          {/* Karteikarte mit dem aktuellen Punktestand */}
+          <section
+            aria-label="Aktueller Punktestand"
+            className="index-card relative self-start overflow-hidden rounded-xl border shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:shadow-none"
+          >
+            <div className="flex h-12 items-center justify-between pl-12 pr-5">
+              <span className="truncate text-sm text-muted-foreground">
+                {session.aktuellerKarteikasten || "Karteikasten"}
+              </span>
+              <span className="font-mono text-xs text-muted-foreground">
+                {LANG_LABELS[session.lang] ?? session.lang}
+              </span>
             </div>
-            <CardDescription className="text-xs sm:text-sm">
-              Gib einen Zielwert ein oder nutze die Schnellauswahl. Der Algorithmus bewegt die Vokabeln direkt im Karteikasten.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 sm:space-y-5 pt-4">
-            {/* Manual Input */}
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="targetPoints" className="text-sm font-medium">
-                  Neuer Punktestand
-                </Label>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Input
-                    id="targetPoints"
-                    type="number"
-                    placeholder="Gewünschter Punktestand"
-                    value={targetPoints}
-                    onChange={(e) => setTargetPoints(e.target.value)}
-                    disabled={isLoading}
-                    className="flex-1 h-11 text-base font-semibold"
-                  />
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full sm:w-auto h-11 px-6 font-medium"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Verarbeite...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Anwenden
-                      </>
-                    )}
-                  </Button>
-                </div>
-                {session && targetPoints && !isNaN(parseInt(targetPoints, 10)) && (
-                  <p className="text-xs text-muted-foreground">
-                    Differenz:{" "}
-                    <span
-                      className={`font-semibold ${
-                        parseInt(targetPoints, 10) - session.gesamtpunkteKarteikasten > 0
-                          ? "text-emerald-500"
-                          : parseInt(targetPoints, 10) - session.gesamtpunkteKarteikasten < 0
-                          ? "text-rose-500"
-                          : "text-muted-foreground"
-                      }`}
-                    >
-                      {parseInt(targetPoints, 10) - session.gesamtpunkteKarteikasten > 0 ? "+" : ""}
-                      {parseInt(targetPoints, 10) - session.gesamtpunkteKarteikasten} Punkte
-                    </span>
-                  </p>
+            <div className="pl-12 pr-5 pt-5 pb-8">
+              <p className="text-sm text-muted-foreground">Gesamtpunkte</p>
+              <p className="mt-2 font-mono text-[56px] font-medium leading-none tabular-nums sm:text-[64px]">
+                {fmt(session.gesamtpunkteKarteikasten)}
+              </p>
+              <p className="mt-4 h-5 font-mono text-sm tabular-nums">
+                {diff !== null && diff !== 0 && (
+                  <span className="text-primary">
+                    Ziel {fmt(parsedTarget)}, {signed(diff)}
+                  </span>
                 )}
+              </p>
+            </div>
+            {session.school && (
+              <div className="flex h-12 items-center pl-12 pr-5 font-mono text-xs text-muted-foreground">
+                {session.school}
+              </div>
+            )}
+          </section>
+
+          {/* Editor */}
+          <section aria-labelledby="editor-title" className="md:pt-2">
+            <h1 id="editor-title" className="text-xl font-medium">
+              Punktestand setzen
+            </h1>
+            <p className="mt-2 text-sm leading-5 text-muted-foreground">
+              Gib den Zielwert ein. Die App schiebt dafür Vokabeln im Karteikasten vor oder zurück, pro Punkt eine Bewegung.
+            </p>
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-2">
+              <Label htmlFor="targetPoints">Zielwert</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="targetPoints"
+                  type="number"
+                  inputMode="numeric"
+                  value={targetPoints}
+                  onChange={(e) => setTargetPoints(e.target.value)}
+                  disabled={isLoading}
+                  className="h-11 flex-1 font-mono text-base tabular-nums"
+                />
+                <Button type="submit" disabled={isLoading || diff === 0 || diff === null} className="h-11 px-5">
+                  Übernehmen
+                </Button>
               </div>
             </form>
 
-            {/* Quick Actions */}
-            <div className="space-y-2 pt-2 border-t border-border/30">
-              <Label className="text-sm font-medium">Schnellauswahl</Label>
-              <div className="grid grid-cols-3 sm:flex sm:flex-wrap gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickChange(-100)}
-                  disabled={isLoading}
-                  className="text-xs sm:text-sm h-9 hover:border-destructive hover:text-destructive"
-                >
-                  <Minus className="mr-1 h-3 w-3" />
-                  100
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickChange(-10)}
-                  disabled={isLoading}
-                  className="text-xs sm:text-sm h-9 hover:border-destructive hover:text-destructive"
-                >
-                  <Minus className="mr-1 h-3 w-3" />
-                  10
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickChange(10)}
-                  disabled={isLoading}
-                  className="text-xs sm:text-sm h-9 hover:border-emerald-500 hover:text-emerald-500"
-                >
-                  <Plus className="mr-1 h-3 w-3" />
-                  10
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickChange(100)}
-                  disabled={isLoading}
-                  className="text-xs sm:text-sm h-9 hover:border-emerald-500 hover:text-emerald-500"
-                >
-                  <Plus className="mr-1 h-3 w-3" />
-                  100
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickChange(1000)}
-                  disabled={isLoading}
-                  className="col-span-2 sm:col-span-1 text-xs sm:text-sm h-9 hover:border-emerald-500 hover:text-emerald-500 font-semibold"
-                >
-                  <Plus className="mr-1 h-3 w-3" />
-                  1000
-                </Button>
+            <div className="mt-6 space-y-2">
+              <p className="text-sm font-medium" id="quick-label">
+                Schnell ändern
+              </p>
+              <div className="grid grid-cols-5 gap-2" role="group" aria-labelledby="quick-label">
+                {QUICK_STEPS.map((step) => (
+                  <Button
+                    key={step}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuickChange(step)}
+                    disabled={isLoading}
+                    className="h-9 px-0 font-mono text-[13px] tabular-nums"
+                  >
+                    {signed(step)}
+                  </Button>
+                ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Request Log */}
+            {isLoading && progress && (
+              <div className="mt-8 space-y-2" role="status" aria-live="polite">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Vokabeln werden verschoben</span>
+                  <span className="font-mono tabular-nums">
+                    {fmt(progress.done)} / {fmt(progress.total)}
+                  </span>
+                </div>
+                <Progress value={progressPercent} aria-label={`${progressPercent} Prozent`} />
+              </div>
+            )}
+          </section>
+        </div>
+
         <Collapsible open={showLog} onOpenChange={setShowLog}>
-          <CollapsibleContent>
+          <CollapsibleContent className="mt-12">
             <RequestLog refreshTrigger={logRefreshTrigger} />
           </CollapsibleContent>
         </Collapsible>
-      </div>
+      </main>
     </div>
   );
 }

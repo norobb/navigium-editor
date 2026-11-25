@@ -1,159 +1,100 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
 import { getLogs, clearLogs, LogEntry } from "@/lib/navigium-api";
-import { Trash2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, RefreshCw, ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface RequestLogProps {
   refreshTrigger?: number;
 }
 
+const formatTime = (date: Date) =>
+  new Date(date).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+const Block = ({ label, children, error }: { label: string; children: string; error?: boolean }) => (
+  <div>
+    <p className={`mb-1 text-xs ${error ? "text-destructive" : "text-muted-foreground"}`}>{label}</p>
+    <pre
+      className={`overflow-x-auto rounded-md p-3 font-mono text-xs leading-5 ${
+        error ? "bg-destructive/10 text-destructive" : "bg-muted"
+      }`}
+    >
+      {children}
+    </pre>
+  </div>
+);
+
 export default function RequestLog({ refreshTrigger }: RequestLogProps) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setLogs(getLogs());
   }, [refreshTrigger]);
-
-  const handleRefresh = () => {
-    setLogs(getLogs());
-  };
 
   const handleClear = () => {
     clearLogs();
     setLogs([]);
   };
 
-  const toggleExpand = (id: string) => {
-    setExpandedLogs(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const getTypeBadgeVariant = (type: LogEntry['type']) => {
-    switch (type) {
-      case 'login':
-        return 'default';
-      case 'setpoints':
-        return 'secondary';
-      case 'points':
-        return 'outline';
-      case 'welcome':
-        return 'outline';
-      case 'training':
-        return 'secondary';
-      case 'vocable':
-        return 'outline';
-      default:
-        return 'default';
-    }
-  };
-
-  const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-  };
-
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="text-base sm:text-lg">Request Log</CardTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleRefresh}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleClear}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+    <section aria-labelledby="log-title">
+      <div className="flex h-10 items-center justify-between">
+        <h2 id="log-title" className="text-base font-medium">
+          Protokoll <span className="ml-2 font-mono text-xs font-normal text-muted-foreground">{logs.length}</span>
+        </h2>
+        <div className="flex gap-1 text-muted-foreground">
+          <Button variant="ghost" size="icon" onClick={() => setLogs(getLogs())} title="Neu laden" aria-label="Protokoll neu laden">
+            <RefreshCw />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleClear} title="Leeren" aria-label="Protokoll leeren">
+            <Trash2 />
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[300px] sm:h-[400px]">
+      </div>
+
+      <div className="mt-2 rounded-xl border">
+        <ScrollArea className="h-[320px] sm:h-[400px]">
           {logs.length === 0 ? (
-            <p className="text-muted-foreground text-center py-8 text-sm">
-              Keine Requests bisher
-            </p>
+            <p className="py-12 text-center text-sm text-muted-foreground">Noch keine Anfragen</p>
           ) : (
-            <div className="space-y-2">
+            <ul className="divide-y">
               {logs.map((log) => (
-                <Collapsible
-                  key={log.id}
-                  open={expandedLogs.has(log.id)}
-                  onOpenChange={() => toggleExpand(log.id)}
-                >
-                  <div className="border rounded-lg p-2 sm:p-3">
-                    <CollapsibleTrigger className="w-full">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge variant={getTypeBadgeVariant(log.type)} className="text-xs">
-                            {log.type.toUpperCase()}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {formatTime(log.timestamp)}
-                          </span>
-                          {log.error && (
-                            <Badge variant="destructive" className="text-xs">
-                              Error
-                            </Badge>
-                          )}
-                        </div>
-                        {expandedLogs.has(log.id) ? (
-                          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
+                <li key={log.id}>
+                  <Collapsible>
+                    <CollapsibleTrigger className="group flex h-10 w-full items-center gap-4 px-4 text-left text-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:bg-accent">
+                      <span className="w-16 shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                        {formatTime(log.timestamp)}
+                      </span>
+                      <span className="flex-1 font-mono text-[13px]">{log.type}</span>
+                      {log.error && <span className="text-xs text-destructive">Fehler</span>}
+                      {log.response && !log.error && (
+                        <span className="font-mono text-xs tabular-nums text-muted-foreground">{log.response.status}</span>
+                      )}
+                      <ChevronDown className="h-4 w-4 stroke-[1.5] text-muted-foreground transition-transform group-data-[state=open]:rotate-180" />
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="mt-3 space-y-3 text-xs sm:text-sm">
-                        <div>
-                          <p className="font-medium text-muted-foreground mb-1">Request:</p>
-                          <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
-                            {JSON.stringify(log.request, null, 2)}
-                          </pre>
-                        </div>
+                      <div className="space-y-4 px-4 pb-4 pt-2">
+                        <Block label="Anfrage">{JSON.stringify(log.request, null, 2)}</Block>
                         {log.response && (
-                          <div>
-                            <p className="font-medium text-muted-foreground mb-1">
-                              Response (Status: {log.response.status}):
-                            </p>
-                            <pre className="bg-muted p-2 rounded text-xs overflow-x-auto">
-                              {JSON.stringify(log.response.data, null, 2)}
-                            </pre>
-                          </div>
+                          <Block label={`Antwort, Status ${log.response.status}`}>
+                            {JSON.stringify(log.response.data, null, 2)}
+                          </Block>
                         )}
                         {log.error && (
-                          <div>
-                            <p className="font-medium text-destructive mb-1">Error:</p>
-                            <pre className="bg-destructive/10 text-destructive p-2 rounded text-xs overflow-x-auto">
-                              {log.error}
-                            </pre>
-                          </div>
+                          <Block label="Fehler" error>
+                            {log.error}
+                          </Block>
                         )}
                       </div>
                     </CollapsibleContent>
-                  </div>
-                </Collapsible>
+                  </Collapsible>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
         </ScrollArea>
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
